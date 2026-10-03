@@ -7,4 +7,5 @@ export const CACHE_TAGS = {
   settings: "site-settings",
   pages: "pages",
   catalog: "catalog",
+  reviews: "reviews",
 } as const;

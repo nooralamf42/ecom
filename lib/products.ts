@@ -1,6 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { db, hasDatabase } from "./db";
 import { demoProducts, demoReviews } from "./demo-data";
 import { demoSlugToType } from "./categories";
+import { CACHE_TAGS } from "./cache-tags";
 import type { ProductType, StoreProduct, ReviewView } from "./types";
 
 type DbProduct = Awaited<ReturnType<typeof db.product.findFirst>>;
@@ -33,9 +35,63 @@ export type ProductFilter = {
   categorySlug?: string;
 };
 
+/*
+ * Cached reads. These throw on DB errors so a failure is never cached; the
+ * exported wrappers below decide the fallback. `revalidate` is a safety net
+ * for writes made outside Next (seed/import scripts) — admin changes
+ * invalidate immediately via updateTag(CACHE_TAGS.catalog).
+ */
+const CATALOG_TTL = 3600;
+
+const loadProducts = unstable_cache(
+  async (type: ProductType | null, featured: boolean | null, categorySlug: string | null) => {
+    const rows = await db.product.findMany({
+      where: {
+        isActive: true,
+        ...(type ? { type } : {}),
+        ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+        ...(featured !== null ? { featured } : {}),
+      },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    });
+    return rows.map(toStoreProduct);
+  },
+  ["products:list:v1"],
+  { tags: [CACHE_TAGS.catalog], revalidate: CATALOG_TTL },
+);
+
+const loadProductBySlug = unstable_cache(
+  async (slug: string) => {
+    const row = await db.product.findUnique({ where: { slug } });
+    return row ? toStoreProduct(row) : null;
+  },
+  ["products:by-slug:v1"],
+  { tags: [CACHE_TAGS.catalog], revalidate: CATALOG_TTL },
+);
+
+const loadProductReviews = unstable_cache(
+  async (productId: string) => {
+    const rows = await db.review.findMany({
+      where: { productId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      author: r.author,
+      rating: r.rating,
+      comment: r.comment,
+      images: r.images,
+      verified: true,
+    }));
+  },
+  ["products:reviews:v1"],
+  { tags: [CACHE_TAGS.reviews], revalidate: CATALOG_TTL },
+);
+
 export async function getProducts(filter: ProductFilter = {}): Promise<StoreProduct[]> {
   if (!hasDatabase) {
-    // In demo mode a category slug maps back to a product type.
+    // Demo mode (no DB configured): a category slug maps back to a product type.
     const catType = filter.categorySlug ? demoSlugToType(filter.categorySlug) : undefined;
     return demoProducts.filter(
       (p) =>
@@ -45,19 +101,14 @@ export async function getProducts(filter: ProductFilter = {}): Promise<StoreProd
     );
   }
   try {
-    const rows = await db.product.findMany({
-      where: {
-        isActive: true,
-        ...(filter.type ? { type: filter.type } : {}),
-        ...(filter.categorySlug ? { category: { slug: filter.categorySlug } } : {}),
-        ...(filter.featured !== undefined ? { featured: filter.featured } : {}),
-      },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    });
-    return rows.map(toStoreProduct);
-  } catch {
-    // DB unreachable at request time — fall back gracefully.
-    return demoProducts;
+    return await loadProducts(
+      filter.type ?? null,
+      filter.featured ?? null,
+      filter.categorySlug ?? null,
+    );
+  } catch (err) {
+    console.error("getProducts failed", err);
+    return [];
   }
 }
 
@@ -66,10 +117,10 @@ export async function getProductBySlug(slug: string): Promise<StoreProduct | nul
     return demoProducts.find((p) => p.slug === slug) ?? null;
   }
   try {
-    const row = await db.product.findUnique({ where: { slug } });
-    return row ? toStoreProduct(row) : null;
-  } catch {
-    return demoProducts.find((p) => p.slug === slug) ?? null;
+    return await loadProductBySlug(slug);
+  } catch (err) {
+    console.error("getProductBySlug failed", err);
+    return null;
   }
 }
 
@@ -84,43 +135,23 @@ export async function getProductReviews(productId: string): Promise<ReviewView[]
   }));
   if (!hasDatabase) return demo;
   try {
-    const rows = await db.review.findMany({
-      where: { productId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-    const real: ReviewView[] = rows.map((r) => ({
-      id: r.id,
-      author: r.author,
-      rating: r.rating,
-      comment: r.comment,
-      images: r.images,
-      verified: true,
-    }));
     // Real customer reviews first, then the sample reviews.
-    return [...real, ...demo];
-  } catch {
+    return [...(await loadProductReviews(productId)), ...demo];
+  } catch (err) {
+    console.error("getProductReviews failed", err);
     return demo;
   }
 }
 
+/**
+ * Deliberately NOT cached: checkout uses this for authoritative prices, so it
+ * must always read the database.
+ */
 export async function getProductsByIds(ids: string[]): Promise<StoreProduct[]> {
   if (ids.length === 0) return [];
   if (!hasDatabase) {
     return demoProducts.filter((p) => ids.includes(p.id));
   }
-  try {
-    const rows = await db.product.findMany({ where: { id: { in: ids } } });
-    return rows.map(toStoreProduct);
-  } catch {
-    return demoProducts.filter((p) => ids.includes(p.id));
-  }
-}
-
-export async function getDrinks() {
-  return getProducts({ type: "DRINK" });
-}
-
-export async function getGummies() {
-  return getProducts({ type: "GUMMY" });
+  const rows = await db.product.findMany({ where: { id: { in: ids } } });
+  return rows.map(toStoreProduct);
 }

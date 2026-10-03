@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { db, hasDatabase } from "@/lib/db";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getDbUser } from "@/lib/current-user";
 import { clerkEnabled } from "@/lib/auth-config";
 import { reviewSchema, type ReviewInput } from "@/lib/validators";
@@ -74,6 +75,7 @@ export async function submitReview(
       });
     }
 
+    updateTag(CACHE_TAGS.reviews);
     if (product) revalidatePath(`/products/${product.slug}`);
     return { ok: true, error: undefined };
   } catch (err) {

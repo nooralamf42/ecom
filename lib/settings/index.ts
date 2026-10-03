@@ -11,7 +11,9 @@ const loadSettings = unstable_cache(
     return settingsFromRows(await db.siteSetting.findMany());
   },
   ["site-settings:v1"],
-  { tags: [CACHE_TAGS.settings] },
+  // revalidate: safety net for writes made outside Next (seed script);
+  // admin saves invalidate immediately via updateTag(CACHE_TAGS.settings).
+  { tags: [CACHE_TAGS.settings], revalidate: 3600 },
 );
 
 /**

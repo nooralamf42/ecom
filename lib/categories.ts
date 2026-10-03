@@ -1,5 +1,7 @@
+import { unstable_cache } from "next/cache";
 import { db, hasDatabase } from "./db";
 import { demoProducts } from "./demo-data";
+import { CACHE_TAGS } from "./cache-tags";
 import type { ProductType } from "./types";
 
 export type StoreCategory = { name: string; slug: string };
@@ -21,15 +23,25 @@ export async function getStoreCategories(): Promise<StoreCategory[]> {
       .map((t) => DEMO_CATEGORY_BY_TYPE[t]);
   }
   try {
+    return await loadStoreCategories();
+  } catch (err) {
+    console.error("getStoreCategories failed", err);
+    return [];
+  }
+}
+
+// Read by the root layout on every page — cached; throws so errors aren't cached.
+const loadStoreCategories = unstable_cache(
+  async (): Promise<StoreCategory[]> => {
     const cats = await db.category.findMany({
       where: { products: { some: { isActive: true } } },
       orderBy: { name: "asc" },
     });
     return cats.map((c) => ({ name: c.name, slug: c.slug }));
-  } catch {
-    return [];
-  }
-}
+  },
+  ["categories:store:v1"],
+  { tags: [CACHE_TAGS.catalog], revalidate: 3600 },
+);
 
 /** All categories (for the admin selector). */
 export async function getAllCategories() {

@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { db, hasDatabase } from "@/lib/db";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { isAdmin } from "@/lib/current-user";
 import { clerkEnabled } from "@/lib/auth-config";
 import { productSchema, type ProductInput } from "@/lib/validators";
@@ -74,10 +75,11 @@ export async function saveProduct(
       id = created.id;
     }
 
+    // Expire cached catalog data (incl. the old slug if it changed), then the
+    // pages; "layout" also refreshes nav categories rendered by the root layout.
+    updateTag(CACHE_TAGS.catalog);
     revalidatePath("/admin/products");
-    revalidatePath("/products");
-    revalidatePath("/");
-    revalidatePath(`/products/${d.slug}`);
+    revalidatePath("/", "layout");
     return { ok: true, id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to save" };
@@ -89,8 +91,9 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
     await assertAdmin();
     if (!hasDatabase) return { ok: false, error: "Database not configured" };
     await db.product.delete({ where: { id } });
+    updateTag(CACHE_TAGS.catalog);
     revalidatePath("/admin/products");
-    revalidatePath("/products");
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to delete" };
