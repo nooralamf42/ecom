@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { db, hasDatabase } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
+import { missingContactDetails } from "@/lib/page-tokens";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +10,7 @@ export const metadata = { title: "Pages" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPagesPage() {
+  const missing = missingContactDetails(await getSettings());
   const pages = hasDatabase
     ? await db.page.findMany({
         orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
@@ -28,6 +31,16 @@ export default async function AdminPagesPage() {
           <Plus className="size-4" /> New page
         </Link>
       </div>
+
+      {missing.length > 0 && (
+        <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Your policy pages show your contact details, but your {missing.join(", ")}{" "}
+          {missing.length === 1 ? "isn't" : "aren't"} set yet. Payment providers check these.{" "}
+          <Link href="/admin/settings?tab=store" className="font-semibold underline">
+            Add them in Settings
+          </Link>
+        </p>
+      )}
 
       {pages.length === 0 ? (
         <p className="mt-10 text-center text-sm text-muted-foreground">
