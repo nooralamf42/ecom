@@ -12,15 +12,7 @@ import { IdentityForm } from "./identity-form";
 import { ThemeForm } from "./theme-form";
 import { HomepageForm } from "./homepage-form";
 import { CommerceForm } from "./commerce-form";
-
-export const SETTINGS_TABS = [
-  { value: "store", label: "Store & SEO" },
-  { value: "theme", label: "Theme" },
-  { value: "homepage", label: "Homepage" },
-  { value: "shipping", label: "Shipping & Discounts" },
-] as const;
-
-export type SettingsTab = (typeof SETTINGS_TABS)[number]["value"];
+import { SETTINGS_TABS, type SettingsTab } from "./tabs";
 
 export function SettingsTabs({
   settings,

@@ -1,10 +1,7 @@
 import { db, hasDatabase } from "@/lib/db";
 import { defaultSettings, settingsFromRows } from "@/lib/settings/parse";
-import {
-  SETTINGS_TABS,
-  SettingsTabs,
-  type SettingsTab,
-} from "@/components/admin/settings/settings-tabs";
+import { SettingsTabs } from "@/components/admin/settings/settings-tabs";
+import { SETTINGS_TABS, type SettingsTab } from "@/components/admin/settings/tabs";
 
 export const metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
