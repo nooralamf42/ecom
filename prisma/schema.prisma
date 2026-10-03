@@ -160,6 +160,30 @@ model OrderItem {
   size      String?
 }
 
+/// Store configuration editable from the admin panel. One row per section
+/// (identity, theme, commerce, homepage); `data` is validated by the zod
+/// schemas in lib/settings/schema.ts, so new settings need no migration.
+model SiteSetting {
+  key       String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Admin-managed content pages (About, policies, custom SEO pages).
+model Page {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  content        String   @default("") // markdown
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean  @default(true)
+  showInFooter   Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Review {
   id        String   @id @default(cuid())
   productId String
