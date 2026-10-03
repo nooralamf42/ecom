@@ -3,16 +3,9 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { db, hasDatabase } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { isAdmin } from "@/lib/current-user";
-import { clerkEnabled } from "@/lib/auth-config";
+import { assertAdmin } from "@/lib/admin-guard";
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { fulfillOrder } from "@/lib/orders";
-
-async function assertAdmin() {
-  if (clerkEnabled && !(await isAdmin())) {
-    throw new Error("Unauthorized");
-  }
-}
 
 type ActionResult = { ok: boolean; error?: string; id?: string };
 

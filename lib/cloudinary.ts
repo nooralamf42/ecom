@@ -15,7 +15,7 @@ if (cloudinaryEnabled) {
 }
 
 /** Produce signed params for a direct browser upload to Cloudinary. */
-export function signUpload(folder = "joyrush/products") {
+export function signUpload(folder = "store/products") {
   const timestamp = Math.round(Date.now() / 1000);
   const signature = cloudinary.utils.api_sign_request(
     { timestamp, folder },

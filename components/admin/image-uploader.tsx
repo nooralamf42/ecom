@@ -14,7 +14,7 @@ export function ImageUploader({
 }: {
   value: string[];
   onChange: (v: string[]) => void;
-  context?: "product" | "review";
+  context?: "product" | "review" | "branding";
   allowUrl?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
