@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { db, hasDatabase } from "./db";
 import { CACHE_TAGS } from "./cache-tags";
+import { RESERVED_SLUGS } from "./page-schema";
 
 export type PageLink = { slug: string; title: string };
 
@@ -12,22 +13,6 @@ export type PublicPage = {
   seoDescription: string | null;
   updatedAt: string; // ISO — cached values are JSON-serialized
 };
-
-/** Paths a content page can never take, because a real route lives there. */
-export const RESERVED_SLUGS = new Set([
-  "admin",
-  "api",
-  "cart",
-  "checkout",
-  "orders",
-  "products",
-  "sign-in",
-  "sign-up",
-  "sitemap.xml",
-  "robots.txt",
-  "favicon.ico",
-  "_next",
-]);
 
 // Cached reads throw on DB errors so failures are never cached; the exported
 // wrappers choose the fallback. Admin page edits call updateTag(CACHE_TAGS.pages).

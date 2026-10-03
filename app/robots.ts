@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getSettings, siteBaseUrl } from "@/lib/settings";
 
-const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const base = siteBaseUrl(await getSettings());
   return {
     rules: {
       userAgent: "*",
