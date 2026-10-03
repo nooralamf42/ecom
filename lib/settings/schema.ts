@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { contrastRatio } from "./color";
 
 /*
  * Store settings, edited from /admin/settings and stored as one JSON row per
@@ -73,7 +74,14 @@ export const identitySchema = z.object({
   seoTitle: text(70),
   seoDescription: text(170),
   ogImageUrl: imageUrl,
-  siteUrl: link(),
+  /** Public address of the store, used for canonical/share links and the sitemap. */
+  siteUrl: z
+    .string()
+    .trim()
+    .max(200)
+    .refine((v) => v === "" || /^https?:\/\/[^/\s]+/i.test(v), "Use a full address like https://mystore.com")
+    .transform((v) => v.replace(/\/+$/, ""))
+    .default(""),
   footerNote: text(80, "Made in India"),
   shopHeading: text(80, "Shop all products"),
   shopDescription: text(200, "Browse our full collection."),
@@ -114,13 +122,24 @@ export const THEME_PRESETS = {
 
 export type ThemePresetKey = keyof typeof THEME_PRESETS;
 
-export const themeSchema = z.object({
-  preset: z.enum(["berry", "royal", "emerald", "midnight", "custom"]).default("berry"),
-  primary: hexColor(THEME_PRESETS.berry.primary),
-  secondary: hexColor(THEME_PRESETS.berry.secondary),
-  background: hexColor(THEME_PRESETS.berry.background),
-  foreground: hexColor(THEME_PRESETS.berry.foreground),
-});
+export const themeSchema = z
+  .object({
+    preset: z.enum(["berry", "royal", "emerald", "midnight", "custom"]).default("berry"),
+    primary: hexColor(THEME_PRESETS.berry.primary),
+    secondary: hexColor(THEME_PRESETS.berry.secondary),
+    background: hexColor(THEME_PRESETS.berry.background),
+    foreground: hexColor(THEME_PRESETS.berry.foreground),
+  })
+  .superRefine((t, ctx) => {
+    // Body text must stay readable (WCAG AA for normal text).
+    if (contrastRatio(t.foreground, t.background) < 4.5) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["foreground"],
+        message: "Text color doesn't contrast enough with the background (needs 4.5:1)",
+      });
+    }
+  });
 
 // ---------- commerce rules ----------
 

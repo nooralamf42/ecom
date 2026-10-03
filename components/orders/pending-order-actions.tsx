@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, CreditCard, X } from "lucide-react";
 import { retryPaymentAction, cancelOrderAction } from "@/app/orders/actions";
 import { Button } from "@/components/ui/button";
+import { useRazorpayBranding } from "@/components/providers/site-settings-provider";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
@@ -44,6 +45,7 @@ export function PendingOrderActions({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const branding = useRazorpayBranding();
   const [paying, setPaying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
@@ -76,10 +78,9 @@ export function PendingOrderActions({
       amount: res.amount,
       currency: res.currency,
       order_id: res.razorpayOrderId,
-      name: "Bangleish",
+      ...branding,
       description: `Order #${orderNumber}`,
       prefill: { name: customerName, email, contact: phone },
-      theme: { color: "#e0218a" },
       handler: async (response: any) => {
         await fetch("/api/razorpay/verify", {
           method: "POST",

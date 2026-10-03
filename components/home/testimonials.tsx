@@ -1,8 +1,9 @@
 import { Star } from "lucide-react";
 import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 import { demoReviews } from "@/lib/demo-data";
+import type { HomepageSettings } from "@/lib/settings/schema";
 
-export function Testimonials() {
+export function Testimonials({ content }: { content: HomepageSettings["testimonials"] }) {
   return (
     <section id="reviews" className="container-page py-16 sm:py-20">
       <Reveal className="mx-auto max-w-2xl text-center">
@@ -11,10 +12,8 @@ export function Testimonials() {
             <Star key={i} className="size-5 fill-brand-tangerine text-brand-tangerine" />
           ))}
         </div>
-        <h2 className="mt-4 text-4xl font-bold sm:text-5xl">Loved across India</h2>
-        <p className="mt-2 text-muted-foreground">
-          Over 170 five-star reviews and counting.
-        </p>
+        <h2 className="mt-4 text-4xl font-bold sm:text-5xl">{content.title}</h2>
+        {content.subtitle && <p className="mt-2 text-muted-foreground">{content.subtitle}</p>}
       </Reveal>
 
       <StaggerGroup className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

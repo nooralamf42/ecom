@@ -26,9 +26,11 @@ export function ProductShowcase({
       <Reveal>
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-primary">
-              {eyebrow}
-            </p>
+            {eyebrow && (
+              <p className="text-sm font-bold uppercase tracking-widest text-primary">
+                {eyebrow}
+              </p>
+            )}
             <h2 className="mt-2 max-w-xl text-4xl font-bold sm:text-5xl">{title}</h2>
             {description && (
               <p className="mt-3 max-w-lg text-muted-foreground">{description}</p>

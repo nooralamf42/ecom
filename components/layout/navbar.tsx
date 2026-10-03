@@ -13,6 +13,7 @@ import {
 } from "@clerk/nextjs";
 import { useCart, useHydrated } from "@/store/cart";
 import { useLenisLock } from "@/components/providers/smooth-scroll-provider";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import { cartCount } from "@/lib/cart-totals";
 import { clerkEnabled } from "@/lib/auth-config";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function Navbar({ categories = [] }: { categories?: { name: string; slug:
   const openCart = useCart((s) => s.open);
   const hydrated = useHydrated();
   const count = hydrated ? cartCount(lines) : 0;
+  const { identity } = useSiteSettings();
   useLenisLock(mobileOpen);
 
   const links = [
@@ -60,8 +62,8 @@ export function Navbar({ categories = [] }: { categories?: { name: string; slug:
       )}
     >
       <nav className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" aria-label="Bangleish home">
-          <BrandLogo />
+        <Link href="/" aria-label={`${identity.storeName} home`}>
+          <BrandLogo name={identity.storeName} logoUrl={identity.logoUrl} />
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">

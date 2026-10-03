@@ -29,7 +29,7 @@ function ClerkAuthBridge({
 }
 import { useCart, useHydrated } from "@/store/cart";
 import { computeTotals } from "@/lib/cart-totals";
-import { useCommerceRules } from "@/components/providers/site-settings-provider";
+import { useCommerceRules, useRazorpayBranding } from "@/components/providers/site-settings-provider";
 import { formatPrice } from "@/lib/format";
 import { addressSchema, type AddressInput } from "@/lib/validators";
 import { clerkEnabled } from "@/lib/auth-config";
@@ -75,6 +75,7 @@ export default function CheckoutPage() {
   const { lines, clear } = useCart();
   const hydrated = useHydrated();
   const totals = computeTotals(lines, useCommerceRules());
+  const branding = useRazorpayBranding();
   const [form, setForm] = useState<AddressInput>(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -213,14 +214,13 @@ export default function CheckoutPage() {
         amount: data.amount,
         currency: data.currency,
         order_id: data.razorpayOrderId,
-        name: "Bangleish",
+        ...branding,
         description: "Order payment",
         prefill: {
           name: parsed.data.name,
           email: parsed.data.email,
           contact: parsed.data.phone,
         },
-        theme: { color: "#e0218a" },
         handler: async (response: any) => {
           const verify = await fetch("/api/razorpay/verify", {
             method: "POST",

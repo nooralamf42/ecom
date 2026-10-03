@@ -37,3 +37,13 @@ export function useCommerceRules(): CommerceRules {
     [commerce],
   );
 }
+
+/** Store name, logo and brand color for the Razorpay payment modal. */
+export function useRazorpayBranding(): { name: string; image?: string; theme: { color: string } } {
+  const { identity, theme } = useSiteSettings();
+  return {
+    name: identity.storeName,
+    ...(identity.logoUrl ? { image: identity.logoUrl } : {}),
+    theme: { color: theme.primary },
+  };
+}

@@ -6,12 +6,16 @@ import { Testimonials } from "@/components/home/testimonials";
 import { BundlePromo } from "@/components/home/bundle-promo";
 import { Faq } from "@/components/home/faq";
 import { getProducts } from "@/lib/products";
+import { getSettings, toCommerceRules } from "@/lib/settings";
 
 export default async function HomePage() {
-  const [featured, all] = await Promise.all([
+  const [featured, all, settings] = await Promise.all([
     getProducts({ featured: true }),
     getProducts(),
+    getSettings(),
   ]);
+  const home = settings.homepage;
+  const show = home.sections;
 
   // Fall back to newest products if nothing is flagged featured.
   const showcase = (featured.length > 0 ? featured : all).slice(0, 8);
@@ -19,21 +23,23 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero products={heroProducts} />
-      <Marquee />
-      <ProductShowcase
-        id="bangles"
-        eyebrow="Bestsellers"
-        title="Shine in every design"
-        description="Handcrafted bangles in gorgeous styles and every size — 2.2 to 2.8."
-        products={showcase}
-        ctaHref="/products"
-        ctaLabel="Shop all"
-      />
-      <Features />
-      <Testimonials />
-      <BundlePromo />
-      <Faq />
+      {show.hero && <Hero content={home.hero} products={heroProducts} />}
+      {show.marquee && <Marquee items={home.marquee} />}
+      {show.products && (
+        <ProductShowcase
+          id="featured"
+          eyebrow={home.products.eyebrow}
+          title={home.products.title}
+          description={home.products.description}
+          products={showcase}
+          ctaHref="/products"
+          ctaLabel="Shop all"
+        />
+      )}
+      {show.features && <Features content={home.features} />}
+      {show.testimonials && <Testimonials content={home.testimonials} />}
+      {show.promo && <BundlePromo content={home.promo} rules={toCommerceRules(settings)} />}
+      {show.faq && <Faq content={home.faq} />}
     </>
   );
 }

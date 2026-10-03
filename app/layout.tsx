@@ -3,7 +3,9 @@ import { Fredoka, Nunito, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkEnabled } from "@/lib/auth-config";
 import { getStoreCategories } from "@/lib/categories";
-import { getSettings } from "@/lib/settings";
+import { getFooterPages } from "@/lib/pages";
+import { getSettings, siteBaseUrl } from "@/lib/settings";
+import { themeToCss } from "@/lib/settings/theme-css";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
 import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
@@ -29,26 +31,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Bangleish — Handcrafted Bangles",
-    template: "%s · Bangleish",
-  },
-  description:
-    "Beautiful handcrafted bangles for every occasion. Shining designs in sizes 2.2–2.8, delivered across India.",
-  metadataBase: new URL("https://bangleish.example"),
-  openGraph: {
-    title: "Bangleish — Handcrafted Bangles",
-    description:
-      "Beautiful handcrafted bangles for every occasion, delivered across India.",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const { storeName, tagline, seoTitle, seoDescription, ogImageUrl, faviconUrl } =
+    settings.identity;
+  const title = seoTitle || (tagline ? `${storeName} — ${tagline}` : storeName);
+  const description = seoDescription || tagline || undefined;
+
+  return {
+    title: { default: title, template: `%s · ${storeName}` },
+    description,
+    metadataBase: new URL(siteBaseUrl(settings)),
+    openGraph: {
+      title,
+      description,
+      siteName: storeName,
+      type: "website",
+      ...(ogImageUrl ? { images: [ogImageUrl] } : {}),
+    },
+    ...(faviconUrl ? { icons: { icon: faviconUrl } } : {}),
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [categories, settings] = await Promise.all([getStoreCategories(), getSettings()]);
+  const [categories, settings, footerPages] = await Promise.all([
+    getStoreCategories(),
+    getSettings(),
+    getFooterPages(),
+  ]);
   const clientSettings = {
     identity: settings.identity,
     theme: settings.theme,
@@ -61,12 +73,16 @@ export default async function RootLayout({
       className={`${fredoka.variable} ${nunito.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Theme colors from admin settings; values are validated hex (safe to inline). */}
+        <style id="store-theme" dangerouslySetInnerHTML={{ __html: themeToCss(settings.theme) }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <SiteSettingsProvider value={clientSettings}>
           <SmoothScrollProvider>
             <Navbar categories={categories} />
             <main className="flex-1">{children}</main>
-            <Footer categories={categories} />
+            <Footer categories={categories} identity={settings.identity} pages={footerPages} />
             <CartDrawer />
           </SmoothScrollProvider>
         </SiteSettingsProvider>

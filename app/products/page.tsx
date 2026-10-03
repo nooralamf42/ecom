@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import { getStoreCategories } from "@/lib/categories";
+import { getSettings } from "@/lib/settings";
 import { ProductCard } from "@/components/product/product-card";
 import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ export default async function ProductsPage({
   searchParams: Promise<{ category?: string; type?: string }>;
 }) {
   const { category, type } = await searchParams;
-  const categories = await getStoreCategories();
+  const [categories, { identity }] = await Promise.all([getStoreCategories(), getSettings()]);
 
   const activeType = ["DRINK", "GUMMY", "BUNDLE"].includes(type ?? "")
     ? (type as ProductType)
@@ -32,13 +33,10 @@ export default async function ProductsPage({
         <p className="text-sm font-bold uppercase tracking-widest text-primary">
           Shop
         </p>
-        <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
-          Everything Joy Rush
-        </h1>
-        <p className="mt-3 max-w-lg text-muted-foreground">
-          Sparkling drinks and mood gummies, made with real ingredients and a
-          whole lot of joy.
-        </p>
+        <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{identity.shopHeading}</h1>
+        {identity.shopDescription && (
+          <p className="mt-3 max-w-lg text-muted-foreground">{identity.shopDescription}</p>
+        )}
       </Reveal>
 
       {/* Filter pills (from the database) */}

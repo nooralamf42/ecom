@@ -9,7 +9,22 @@ import Image from "next/image";
 import { formatPrice, discountPercent } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { ReviewForm } from "./review-form";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import type { StoreProduct, ReviewView } from "@/lib/types";
+
+/** Lowest cart value that unlocks free shipping, from the store's rules. */
+function freeShippingText(rules: {
+  shippingFee: number;
+  freeShippingEnabled: boolean;
+  freeShippingThreshold: number;
+  tiers: { minSubtotal: number; freeShipping: boolean }[];
+}): string {
+  if (rules.shippingFee === 0) return "Free shipping";
+  const mins = rules.tiers.filter((t) => t.freeShipping).map((t) => t.minSubtotal);
+  if (rules.freeShippingEnabled) mins.push(rules.freeShippingThreshold);
+  if (mins.length === 0) return "";
+  return `Free shipping on orders over ${formatPrice(Math.min(...mins))}`;
+}
 
 export function ProductDetail({
   product,
@@ -20,6 +35,10 @@ export function ProductDetail({
 }) {
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const { commerce } = useSiteSettings();
+  const shippingNote = [freeShippingText(commerce), commerce.deliveryEstimate && `ships in ${commerce.deliveryEstimate}`]
+    .filter(Boolean)
+    .join(" · ");
   const off = discountPercent(product.price, product.compareAtPrice);
   const tint = `color-mix(in oklab, var(--${product.accentColor}) 22%, white)`;
   const avgRating =
@@ -161,10 +180,12 @@ export function ProductDetail({
             </AddToCartButton>
           </div>
 
-          <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-            <Truck className="size-4" />
-            Free shipping on orders over ₹999 · ships in 3–6 days
-          </div>
+          {shippingNote && (
+            <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+              <Truck className="size-4" />
+              {shippingNote}
+            </div>
+          )}
 
           {product.ingredients && (
             <details className="mt-6 rounded-2xl border bg-card p-5">

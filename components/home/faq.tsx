@@ -4,37 +4,20 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
+import type { HomepageSettings } from "@/lib/settings/schema";
 
-const faqs = [
-  {
-    q: "How do I choose the right size?",
-    a: "Bangles come in standard sizes 2.2, 2.4, 2.6 and 2.8. Measure the widest part of your hand (with fingers together) and match it to the size chart — 2.4 is the most common women's size.",
-  },
-  {
-    q: "How fast is shipping?",
-    a: "We ship pan-India via Shiprocket. Most orders arrive in 3–6 business days, and you'll get a tracking link the moment your order leaves us.",
-  },
-  {
-    q: "What's your return policy?",
-    a: "If something arrives damaged or you're not happy, reach out within 7 days and we'll make it right — replacement or refund.",
-  },
-  {
-    q: "Are the bangles good for daily wear?",
-    a: "Absolutely. Our designs are made to be lightweight and durable for both everyday and festive wear.",
-  },
-];
-
-export function Faq() {
+export function Faq({ content }: { content: HomepageSettings["faq"] }) {
   const [open, setOpen] = useState<number | null>(0);
+  if (content.items.length === 0) return null;
 
   return (
     <section id="faq" className="container-page py-16 sm:py-20">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <h2 className="text-4xl font-bold sm:text-5xl">Questions? Answered.</h2>
+        <h2 className="text-4xl font-bold sm:text-5xl">{content.title}</h2>
       </Reveal>
 
       <div className="mx-auto mt-10 max-w-2xl divide-y divide-black/10 rounded-[1.5rem] border border-black/5 bg-card px-6">
-        {faqs.map((f, i) => {
+        {content.items.map((f, i) => {
           const isOpen = open === i;
           return (
             <div key={i} className="py-2">

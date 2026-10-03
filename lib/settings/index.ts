@@ -29,6 +29,15 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
   }
 });
 
+/** Public base URL: the admin-set site address, else the env fallback. No trailing slash. */
+export function siteBaseUrl(settings: SiteSettings): string {
+  return (
+    settings.identity.siteUrl ||
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "") ||
+    "http://localhost:3000"
+  );
+}
+
 export function toCommerceRules(settings: SiteSettings): CommerceRules {
   const { shippingFee, freeShippingEnabled, freeShippingThreshold, tiers } = settings.commerce;
   return { shippingFee, freeShippingEnabled, freeShippingThreshold, tiers };

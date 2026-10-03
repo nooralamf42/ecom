@@ -2,18 +2,8 @@
 
 import { motion } from "motion/react";
 
-const items = [
-  "Handcrafted designs",
-  "Sizes 2.2 – 2.8",
-  "Free shipping over ₹999",
-  "Made in India",
-  "Shining finish",
-  "Everyday & festive",
-  "Loved by thousands",
-  "Easy returns",
-];
-
-export function Marquee() {
+export function Marquee({ items }: { items: string[] }) {
+  if (items.length === 0) return null;
   const row = [...items, ...items];
   return (
     <div className="relative overflow-hidden border-y border-black/5 bg-primary py-4 text-primary-foreground">
