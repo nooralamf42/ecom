@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart, useHydrated, lineKey } from "@/store/cart";
 import { computeTotals } from "@/lib/cart-totals";
+import { useCommerceRules } from "@/components/providers/site-settings-provider";
 import { formatPrice } from "@/lib/format";
 import { ProductGraphic } from "@/components/product/product-graphic";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 export default function CartPage() {
   const { lines, setQty, remove } = useCart();
   const hydrated = useHydrated();
-  const totals = computeTotals(lines);
+  const totals = computeTotals(lines, useCommerceRules());
 
   if (!hydrated) {
     return <div className="container-page min-h-[50vh] py-16" />;

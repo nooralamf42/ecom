@@ -29,6 +29,7 @@ function ClerkAuthBridge({
 }
 import { useCart, useHydrated } from "@/store/cart";
 import { computeTotals } from "@/lib/cart-totals";
+import { useCommerceRules } from "@/components/providers/site-settings-provider";
 import { formatPrice } from "@/lib/format";
 import { addressSchema, type AddressInput } from "@/lib/validators";
 import { clerkEnabled } from "@/lib/auth-config";
@@ -73,7 +74,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { lines, clear } = useCart();
   const hydrated = useHydrated();
-  const totals = computeTotals(lines);
+  const totals = computeTotals(lines, useCommerceRules());
   const [form, setForm] = useState<AddressInput>(emptyForm);
   const [loading, setLoading] = useState(false);
 

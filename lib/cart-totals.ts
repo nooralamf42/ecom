@@ -1,12 +1,12 @@
 import type { CartLine } from "./types";
+import type { CommerceRules } from "./settings/schema";
+import { formatPrice } from "./format";
 
-// Tier thresholds (paise)
-export const FREE_SHIP_THRESHOLD = 99900; // ₹999
-export const TIER1_THRESHOLD = 149900; // ₹1499 -> ₹100 off
-export const TIER1_DISCOUNT = 10000; // ₹100
-export const TIER2_THRESHOLD = 199900; // ₹1999 -> ₹200 off + free ship
-export const TIER2_DISCOUNT = 20000; // ₹200
-export const BASE_SHIPPING = 4900; // ₹49
+/*
+ * Pure pricing logic shared by the cart preview (browser) and checkout API
+ * (server). The server result is authoritative — it sets the Razorpay
+ * amount — so both must be given the same CommerceRules from settings.
+ */
 
 export type Totals = {
   subtotal: number;
@@ -16,29 +16,57 @@ export type Totals = {
   freeShipping: boolean;
   /** How much more (paise) to unlock the next perk, and its label. */
   nextTier: { remaining: number; label: string } | null;
+  /** Subtotal at which the last perk unlocks — for progress bars. 0 if none. */
+  progressTarget: number;
 };
 
-export function computeTotals(lines: { price: number; quantity: number }[]): Totals {
+export function computeTotals(
+  lines: { price: number; quantity: number }[],
+  rules: CommerceRules,
+): Totals {
   const subtotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const tiers = [...rules.tiers].sort((a, b) => a.minSubtotal - b.minSubtotal);
 
-  let discount = 0;
-  if (subtotal >= TIER2_THRESHOLD) discount = TIER2_DISCOUNT;
-  else if (subtotal >= TIER1_THRESHOLD) discount = TIER1_DISCOUNT;
+  // Highest tier the subtotal has reached.
+  const reached = tiers.filter((t) => subtotal >= t.minSubtotal).at(-1);
+  const discount = reached ? Math.min(reached.discount, subtotal) : 0;
 
-  const freeShipping = subtotal >= FREE_SHIP_THRESHOLD || subtotal >= TIER2_THRESHOLD;
-  const shipping = subtotal === 0 || freeShipping ? 0 : BASE_SHIPPING;
+  const freeShipping =
+    (rules.freeShippingEnabled && subtotal >= rules.freeShippingThreshold) ||
+    Boolean(reached?.freeShipping);
+  const shipping = subtotal === 0 || freeShipping ? 0 : rules.shippingFee;
   const total = Math.max(0, subtotal - discount) + shipping;
 
-  let nextTier: Totals["nextTier"] = null;
-  if (subtotal > 0 && subtotal < FREE_SHIP_THRESHOLD) {
-    nextTier = { remaining: FREE_SHIP_THRESHOLD - subtotal, label: "free shipping" };
-  } else if (subtotal < TIER1_THRESHOLD) {
-    nextTier = { remaining: TIER1_THRESHOLD - subtotal, label: "₹100 off" };
-  } else if (subtotal < TIER2_THRESHOLD) {
-    nextTier = { remaining: TIER2_THRESHOLD - subtotal, label: "₹200 off + free shipping" };
+  // Perks still ahead of the shopper, nearest first.
+  const perks: { at: number; label: string }[] = [];
+  if (rules.freeShippingEnabled && !freeShipping) {
+    perks.push({ at: rules.freeShippingThreshold, label: "free shipping" });
   }
+  for (const t of tiers) {
+    if (t.minSubtotal <= subtotal) continue;
+    const parts = [
+      t.discount > 0 ? `${formatPrice(t.discount)} off` : "",
+      t.freeShipping && !freeShipping ? "free shipping" : "",
+    ].filter(Boolean);
+    if (parts.length) perks.push({ at: t.minSubtotal, label: parts.join(" + ") });
+  }
+  perks.sort((a, b) => a.at - b.at);
+  const next = perks.find((p) => p.at > subtotal);
 
-  return { subtotal, discount, shipping, total, freeShipping, nextTier };
+  const progressTarget = Math.max(
+    rules.freeShippingEnabled ? rules.freeShippingThreshold : 0,
+    ...tiers.map((t) => t.minSubtotal),
+  );
+
+  return {
+    subtotal,
+    discount,
+    shipping,
+    total,
+    freeShipping,
+    nextTier: next ? { remaining: next.at - subtotal, label: next.label } : null,
+    progressTarget,
+  };
 }
 
 export function cartCount(lines: CartLine[]): number {

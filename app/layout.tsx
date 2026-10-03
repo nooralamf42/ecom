@@ -3,8 +3,10 @@ import { Fredoka, Nunito, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkEnabled } from "@/lib/auth-config";
 import { getStoreCategories } from "@/lib/categories";
+import { getSettings } from "@/lib/settings";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
+import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/components/cart/cart-drawer";
@@ -46,7 +48,12 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const categories = await getStoreCategories();
+  const [categories, settings] = await Promise.all([getStoreCategories(), getSettings()]);
+  const clientSettings = {
+    identity: settings.identity,
+    theme: settings.theme,
+    commerce: settings.commerce,
+  };
 
   const tree = (
     <html
@@ -55,13 +62,14 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <SmoothScrollProvider>
-          {/* Age-gate popup disabled for now — can return as a phone-capture modal later */}
-          <Navbar categories={categories} />
-          <main className="flex-1">{children}</main>
-          <Footer categories={categories} />
-          <CartDrawer />
-        </SmoothScrollProvider>
+        <SiteSettingsProvider value={clientSettings}>
+          <SmoothScrollProvider>
+            <Navbar categories={categories} />
+            <main className="flex-1">{children}</main>
+            <Footer categories={categories} />
+            <CartDrawer />
+          </SmoothScrollProvider>
+        </SiteSettingsProvider>
         <Toaster position="top-center" />
       </body>
     </html>

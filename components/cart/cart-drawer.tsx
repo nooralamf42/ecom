@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useCart, useHydrated, lineKey } from "@/store/cart";
 import { useLenisLock } from "@/components/providers/smooth-scroll-provider";
+import { useCommerceRules } from "@/components/providers/site-settings-provider";
 import { computeTotals } from "@/lib/cart-totals";
 import { formatPrice } from "@/lib/format";
 import { ProductGraphic } from "@/components/product/product-graphic";
@@ -20,7 +21,7 @@ import { cn } from "@/lib/utils";
 export function CartDrawer() {
   const { lines, isOpen, close, setQty, remove } = useCart();
   const hydrated = useHydrated();
-  const totals = computeTotals(lines);
+  const totals = computeTotals(lines, useCommerceRules());
   useLenisLock(isOpen);
 
   return (
@@ -36,8 +37,8 @@ export function CartDrawer() {
           </SheetTitle>
         </SheetHeader>
 
-        {/* Free-shipping / tier progress */}
-        {hydrated && lines.length > 0 && (
+        {/* Free-shipping / tier progress — hidden when the store offers no perks */}
+        {hydrated && lines.length > 0 && totals.progressTarget > 0 && (
           <div className="border-b bg-brand-cream/60 px-5 py-3">
             {totals.nextTier ? (
               <p className="text-sm font-medium">
@@ -57,7 +58,7 @@ export function CartDrawer() {
                 className="h-full rounded-full bg-primary"
                 initial={{ width: 0 }}
                 animate={{
-                  width: `${Math.min(100, (totals.subtotal / 199900) * 100)}%`,
+                  width: `${Math.min(100, (totals.subtotal / totals.progressTarget) * 100)}%`,
                 }}
                 transition={{ type: "spring", stiffness: 120, damping: 20 }}
               />

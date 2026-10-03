@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkoutSchema } from "@/lib/validators";
 import { getProductsByIds } from "@/lib/products";
 import { computeTotals } from "@/lib/cart-totals";
+import { getCommerceRules } from "@/lib/settings";
 import { razorpay, razorpayEnabled } from "@/lib/razorpay";
 import { db, hasDatabase } from "@/lib/db";
 import { getDbUser } from "@/lib/current-user";
@@ -25,7 +26,16 @@ export async function POST(req: Request) {
   const { items, address } = parsed.data;
 
   // Resolve authoritative prices from the catalog (never trust the client).
-  const products = await getProductsByIds(items.map((i) => i.productId));
+  let products: Awaited<ReturnType<typeof getProductsByIds>>;
+  try {
+    products = await getProductsByIds(items.map((i) => i.productId));
+  } catch (err) {
+    console.error("Checkout: could not load products", err);
+    return NextResponse.json(
+      { error: "We couldn't reach our store right now. Please try again in a moment." },
+      { status: 503 },
+    );
+  }
   const lineItems = items
     .map((i) => {
       const p = products.find((pr) => pr.id === i.productId);
@@ -45,7 +55,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No valid items in cart" }, { status: 400 });
   }
 
-  const totals = computeTotals(lineItems);
+  // Shipping/discount rules come from admin settings; this result is what
+  // the customer is actually charged.
+  const totals = computeTotals(lineItems, await getCommerceRules());
 
   // Create Razorpay order when configured.
   let razorpayOrderId: string | null = null;
