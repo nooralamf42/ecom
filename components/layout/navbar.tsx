@@ -26,7 +26,16 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-export function Navbar({ categories = [] }: { categories?: { name: string; slug: string }[] }) {
+type NavLink = { href: string; label: string };
+
+export function Navbar({
+  categories = [],
+  extraLinks = [],
+}: {
+  categories?: { name: string; slug: string }[];
+  /** e.g. the About page, when the store has one. */
+  extraLinks?: NavLink[];
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const lines = useCart((s) => s.lines);
@@ -39,7 +48,7 @@ export function Navbar({ categories = [] }: { categories?: { name: string; slug:
   const links = [
     { href: "/products", label: "Shop All" },
     ...categories.map((c) => ({ href: `/products?category=${c.slug}`, label: c.name })),
-    { href: "/#story", label: "Our Story" },
+    ...extraLinks,
   ];
 
   useEffect(() => {

@@ -1,9 +1,16 @@
 import { Star } from "lucide-react";
 import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
-import { demoReviews } from "@/lib/demo-data";
 import type { HomepageSettings } from "@/lib/settings/schema";
+import type { HomepageReview } from "@/lib/products";
 
-export function Testimonials({ content }: { content: HomepageSettings["testimonials"] }) {
+export function Testimonials({
+  content,
+  reviews,
+}: {
+  content: HomepageSettings["testimonials"];
+  reviews: HomepageReview[];
+}) {
+  if (reviews.length === 0) return null;
   return (
     <section id="reviews" className="container-page py-16 sm:py-20">
       <Reveal className="mx-auto max-w-2xl text-center">
@@ -17,7 +24,7 @@ export function Testimonials({ content }: { content: HomepageSettings["testimoni
       </Reveal>
 
       <StaggerGroup className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {demoReviews.map((r, i) => (
+        {reviews.map((r, i) => (
           <StaggerItem key={i}>
             <figure className="flex h-full flex-col rounded-[1.5rem] border border-black/5 bg-card p-6 shadow-sm">
               <div className="flex gap-0.5">

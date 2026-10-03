@@ -8,9 +8,9 @@ export type StoreCategory = { name: string; slug: string };
 
 // Fallback categories derived from the demo catalog's product types.
 const DEMO_CATEGORY_BY_TYPE: Record<ProductType, StoreCategory> = {
-  DRINK: { name: "Drinks", slug: "drinks" },
-  GUMMY: { name: "Gummies", slug: "gummies" },
-  BUNDLE: { name: "Bundles", slug: "bundles" },
+  DRINK: { name: "Everyday", slug: "everyday" },
+  GUMMY: { name: "Home", slug: "home" },
+  BUNDLE: { name: "Gift sets", slug: "gift-sets" },
 };
 
 /** Categories that currently have at least one active product. */

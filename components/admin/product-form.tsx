@@ -154,18 +154,7 @@ export function ProductForm({
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Type">
-          <select
-            value={form.type}
-            onChange={(e) => set("type", e.target.value as typeof form.type)}
-            className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-          >
-            <option value="DRINK">Drink</option>
-            <option value="GUMMY">Gummy</option>
-            <option value="BUNDLE">Bundle</option>
-          </select>
-        </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Price (₹)">
           <Input
             required
@@ -203,7 +192,7 @@ export function ProductForm({
         </Field>
         <Field label="…or create a new category">
           <Input
-            placeholder="e.g. Bangles"
+            placeholder="e.g. Accessories"
             value={form.newCategory}
             onChange={(e) => set("newCategory", e.target.value)}
           />
@@ -211,10 +200,10 @@ export function ProductForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Flavour">
+        <Field label="Details (e.g. colour, material)">
           <Input value={form.flavor} onChange={(e) => set("flavor", e.target.value)} />
         </Field>
-        <Field label="Mood (gummies)">
+        <Field label="Badge (e.g. Bestseller)">
           <Input value={form.mood} onChange={(e) => set("mood", e.target.value)} />
         </Field>
         <Field label="Stock">
@@ -244,15 +233,15 @@ export function ProductForm({
         </div>
       </Field>
 
-      <Field label="Sizes (comma-separated, e.g. 2.2, 2.4, 2.6, 2.8)">
+      <Field label="Sizes (comma-separated — leave empty if the product has no sizes)">
         <Input
-          placeholder="2.2, 2.4, 2.6, 2.8"
+          placeholder="e.g. S, M, L or 2.2, 2.4, 2.6"
           value={form.sizes}
           onChange={(e) => set("sizes", e.target.value)}
         />
       </Field>
 
-      <Field label="Benefits (one per line)">
+      <Field label="Highlights (one per line)">
         <Textarea
           rows={3}
           value={form.benefits}
@@ -260,7 +249,7 @@ export function ProductForm({
         />
       </Field>
 
-      <Field label="Ingredients">
+      <Field label="Material & care">
         <Textarea
           rows={2}
           value={form.ingredients}

@@ -1,83 +1,126 @@
-# Joy Rush — Animated D2C Storefront
+# D2C Storefront Template
 
-A custom, animation-heavy e-commerce store (inspired by drinkjoyrush.com) built as a
-full-stack Next.js app for the Indian market.
+An animated, full-stack e-commerce store for the Indian market. Each store owner
+deploys **their own copy** (own database, own payment and shipping accounts) and
+customizes everything from the admin panel. Brand, colors, homepage, shipping
+rules and pages are all edited there, with no code changes or redeploys.
 
-**Stack:** Next.js 16 (App Router, TS) · Tailwind v4 + shadcn/ui · Lenis + GSAP +
-Motion (animations) · Prisma + PostgreSQL (Neon) · Clerk (auth) · Cloudinary
-(images) · Razorpay (payments) · Shiprocket (shipping) · Zustand (cart).
+**Stack:** Next.js 16 (App Router, TS) · Tailwind v4 + shadcn/ui · Motion + Lenis
+(animations) · Prisma + PostgreSQL (Neon) · Clerk (auth) · Cloudinary (images) ·
+Razorpay (payments) · Shiprocket (shipping) · Zustand (cart).
 
-## Runs out of the box (demo mode)
+## What store owners can change in `/admin`
 
-With **no configuration**, the site runs in demo mode using a built-in catalog:
+| Screen | What it controls |
+|--------|------------------|
+| **Settings → Store & SEO** | Store name, logo, favicon, tagline, contact details, WhatsApp, social links, search title/description, share image, website address, shop page heading |
+| **Settings → Theme** | Color palette (4 presets or custom colors, with a readability check and live preview) |
+| **Settings → Homepage** | Turn sections on/off; hero text and buttons, announcement strip, “why shop with us” cards, review heading, offer banner, FAQ |
+| **Settings → Shipping & Discounts** | Shipping fee, free-shipping threshold, up to 5 “spend more, save more” tiers, delivery time, return window |
+| **Pages** | About, policy pages and any custom page: markdown content, URL, SEO title/description, publish and footer toggles |
+| **Products / Orders** | Catalog, images, sizes, stock; orders, Shiprocket shipments and labels |
 
+---
+
+## Deploying your own store
+
+### 1. Get the code running locally
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
+With an empty `.env` the site runs in **demo mode** (sample catalog, read-only admin)
+so you can look around. Fill in the services below to go live.
 
-Open http://localhost:3000 — you get the animated storefront, product pages, cart,
-checkout UI (draft orders), and a read-only admin preview. Add the keys below to go
-fully live.
-
-## Go live — configuration
-
-Copy `.env.example` to `.env` and fill in the values.
-
-### 1. Database (Neon PostgreSQL)
-1. Create a free project at https://neon.tech and copy the connection string.
-2. Set `DATABASE_URL` and `DIRECT_URL` in `.env`.
-3. Create the schema and seed products:
+### 2. Database (Neon PostgreSQL)
+1. Create a project at https://neon.tech and copy the connection strings.
+2. Set `DATABASE_URL` (pooled) and `DIRECT_URL` (direct) in `.env`.
+3. Create the tables and the starter pages:
    ```bash
-   npm run db:push      # or: npm run db:migrate
-   npm run db:seed
+   npm run db:push
+   npm run db:seed-store   # About, Contact, Shipping, Refund, Privacy, Terms
    ```
-   Inspect data anytime with `npm run db:studio`.
+4. Optional: `npm run db:seed` adds a few sample products to try checkout with.
+   Delete them in **Admin → Products** before launch.
 
-### 2. Clerk (auth)
-1. Create an app at https://clerk.com and copy the API keys.
-2. Set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`.
-3. (Optional) Add a **Webhook** → endpoint `/api/webhooks/clerk`, subscribe to
-   `user.*`, and set `CLERK_WEBHOOK_SIGNING_SECRET`.
-4. Add your email to `ADMIN_EMAILS` to unlock `/admin`.
+### 3. Clerk (sign-in and admin access)
+1. Create an application at https://clerk.com and copy the API keys into
+   `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`.
+2. Put the store owner's email in `ADMIN_EMAILS` (comma-separate several).
+3. Sign in with that email and open `/admin`.
 
-### 3. Cloudinary (images)
-Set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
-`CLOUDINARY_API_SECRET`. The admin product form then uploads images directly.
-(Without it, paste image URLs or use the built-in illustration fallback.)
+Until Clerk is configured, the admin is a read-only preview: saving and image uploads are refused.
 
-### 4. Razorpay (payments)
-Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`. Use
-**test** keys to try the flow. Add a webhook to `/api/webhooks/razorpay`
-(event `payment.captured`) and set `RAZORPAY_WEBHOOK_SECRET`.
+### 4. Cloudinary (images)
+Set `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET`.
+Logo, product and review photo uploads then work from the admin. Without these keys you can
+paste https image links instead.
 
-Test card: `4111 1111 1111 1111`, any future expiry/CVV.
+### 5. Razorpay (payments)
+Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `NEXT_PUBLIC_RAZORPAY_KEY_ID`. Start with
+**test** keys (test card `4111 1111 1111 1111`, any future expiry/CVV). Add a webhook to
+`/api/webhooks/razorpay` (event `payment.captured`) and set `RAZORPAY_WEBHOOK_SECRET`.
 
-### 5. Shiprocket (shipping)
-Set `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, and `SHIPROCKET_PICKUP_LOCATION`
-(a pickup nickname from your Shiprocket dashboard). Fulfilling a paid order in
-`/admin/orders` creates the shipment.
+Razorpay reviews your Terms, Privacy, Refund, Shipping and Contact pages before enabling live
+mode. The starter pages from step 2 cover these. Fill in your contact details under
+**Settings → Store & SEO** and read every page before applying.
+
+### 6. Shiprocket (shipping)
+Set `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD` and `SHIPROCKET_PICKUP_LOCATION` (the pickup
+nickname from your Shiprocket dashboard). Shipping a paid order from **Admin → Orders**
+creates the shipment and label.
+
+### 7. Make it yours
+In **Admin → Settings**: set the store name, upload a logo, pick colors, write the homepage,
+set shipping rules, and enter your live domain under *Website address* (used for share links
+and `sitemap.xml`). Then add products.
+
+### 8. Deploy
+Deploy to Vercel (or any Node host). Copy every `.env` value into the host's environment
+variables and set `NEXT_PUBLIC_APP_URL` to your domain. `npm run build` runs `prisma generate`.
+
+---
+
+## Caching
+
+Storefront reads (settings, products, categories, reviews, pages) are cached and shared
+across requests. Saving in the admin refreshes the affected pages immediately. If you change
+data outside the admin (bulk import, editing the database directly), use **Refresh store
+data** on the Settings screen. Otherwise caches expire on their own within an hour.
+
+Checkout always reads prices from the database. It never uses the cache.
+
+## Upgrading
+
+Store content lives in the database (`SiteSetting`, `Page`, products), not in code. Pulling a
+newer version of the template therefore doesn't touch a store's customizations. New settings
+come with defaults, and a stored value that no longer validates falls back to its default
+instead of breaking the page. If the schema changes, run `npm run db:push`.
 
 ## Architecture notes
 
-- **Backend is Next.js itself** — Route Handlers (`app/api/*`) + Server Actions
-  (`app/admin/actions.ts`). No separate server.
-- **Prices** live in paise (integer) end-to-end and are always re-computed
-  server-side at checkout (`lib/cart-totals.ts`) — the client is never trusted.
-- **Graceful degradation**: every integration has an `*Enabled` flag; the app
-  falls back to demo data / demo flows when a service isn't configured
-  (`lib/db.ts`, `lib/auth-config.ts`, `lib/razorpay.ts`, etc.).
-- **Animations** respect `prefers-reduced-motion` (see `globals.css` and
-  `SmoothScrollProvider`).
+- **Backend is Next.js itself**: Route Handlers (`app/api/*`) and Server Actions. No separate server.
+- **Settings** are one JSON row per section, validated by the zod schemas in
+  `lib/settings/schema.ts`, which hold the types, the validation and the defaults.
+- **Prices** are integer paise end to end. Checkout re-computes totals on the server with
+  the same rules the cart preview uses (`lib/cart-totals.ts`), so the client is never trusted.
+- **Theme colors** are injected as CSS variables (`lib/settings/theme-css.ts`), so color changes
+  need no rebuild.
+- **Page content** is markdown. Raw HTML and `javascript:` links are not rendered.
+- **Graceful degradation**: every integration has an `*Enabled` flag, and the app falls back to
+  demo data or flows when a service isn't configured.
 
 ## Key paths
 
 | Area | Path |
 |------|------|
+| Settings (schema, loading, theme) | `lib/settings/*`, `app/admin/settings/*`, `components/admin/settings/*` |
+| Content pages | `app/[slug]/page.tsx`, `lib/pages.ts`, `app/admin/pages/*` |
 | Storefront home | `app/page.tsx`, `components/home/*` |
-| Catalog | `app/products/*`, `components/product/*` |
-| Cart | `store/cart.ts`, `components/cart/cart-drawer.tsx` |
-| Checkout + payments | `app/checkout/*`, `app/api/checkout`, `app/api/razorpay/*` |
-| Orders + shipping | `app/orders/*`, `lib/orders.ts`, `lib/shiprocket.ts` |
-| Admin | `app/admin/*`, `components/admin/*` |
+| Catalog | `app/products/*`, `components/product/*`, `lib/products.ts` |
+| Cart and pricing | `store/cart.ts`, `lib/cart-totals.ts`, `components/cart/*` |
+| Checkout and payments | `app/checkout/*`, `app/api/checkout`, `app/api/razorpay/*` |
+| Orders and shipping | `app/orders/*`, `lib/orders.ts`, `lib/shiprocket.ts` |
+| Caching | `lib/cache-tags.ts` (tags), `unstable_cache` wrappers in `lib/*` |
 | Data model | `prisma/schema.prisma` |

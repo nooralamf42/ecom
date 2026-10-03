@@ -5,7 +5,6 @@ import { getSettings } from "@/lib/settings";
 import { ProductCard } from "@/components/product/product-card";
 import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
-import type { ProductType } from "@/lib/types";
 
 export const metadata = { title: "Shop all" };
 export const dynamic = "force-dynamic";
@@ -13,19 +12,12 @@ export const dynamic = "force-dynamic";
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; type?: string }>;
+  searchParams: Promise<{ category?: string }>;
 }) {
-  const { category, type } = await searchParams;
+  const { category } = await searchParams;
   const [categories, { identity }] = await Promise.all([getStoreCategories(), getSettings()]);
 
-  const activeType = ["DRINK", "GUMMY", "BUNDLE"].includes(type ?? "")
-    ? (type as ProductType)
-    : undefined;
-
-  const products = await getProducts({
-    categorySlug: category,
-    type: activeType,
-  });
+  const products = await getProducts({ categorySlug: category });
 
   return (
     <div className="container-page py-12 sm:py-16">
@@ -41,7 +33,7 @@ export default async function ProductsPage({
 
       {/* Filter pills (from the database) */}
       <div className="mt-8 flex flex-wrap gap-2">
-        <FilterPill href="/products" label="All" active={!category && !activeType} />
+        <FilterPill href="/products" label="All" active={!category} />
         {categories.map((c) => (
           <FilterPill
             key={c.slug}

@@ -42,9 +42,7 @@ export function ProductDetail({
   const off = discountPercent(product.price, product.compareAtPrice);
   const tint = `color-mix(in oklab, var(--${product.accentColor}) 22%, white)`;
   const avgRating =
-    reviews.length > 0
-      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-      : 5;
+    reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   return (
     <div className="container-page py-10 sm:py-14">
@@ -74,23 +72,25 @@ export function ProductDetail({
           )}
           <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{product.name}</h1>
 
-          <div className="mt-3 flex items-center gap-3">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={
-                    i < Math.round(avgRating)
-                      ? "size-4 fill-brand-tangerine text-brand-tangerine"
-                      : "size-4 text-muted-foreground/30"
-                  }
-                />
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              {reviews.length} reviews
-            </span>
-          </div>
+          {reviews.length > 0 && (
+            <a href="#reviews" className="mt-3 flex items-center gap-3">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={
+                      i < Math.round(avgRating)
+                        ? "size-4 fill-brand-tangerine text-brand-tangerine"
+                        : "size-4 text-muted-foreground/30"
+                    }
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {avgRating.toFixed(1)} · {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+              </span>
+            </a>
+          )}
 
           <div className="mt-5 flex items-baseline gap-3">
             <span className="text-3xl font-extrabold">{formatPrice(product.price)}</span>
@@ -105,7 +105,7 @@ export function ProductDetail({
 
           {product.flavor && (
             <p className="mt-4 text-sm">
-              <span className="font-bold">Flavour:</span> {product.flavor}
+              <span className="font-bold">Details:</span> {product.flavor}
             </p>
           )}
 
@@ -115,7 +115,7 @@ export function ProductDetail({
                 <span className="text-sm font-bold">
                   Size {selectedSize && <span className="text-primary">· {selectedSize}</span>}
                 </span>
-                <span className="text-xs text-muted-foreground">Bangle size guide</span>
+                {!selectedSize && <span className="text-xs text-muted-foreground">Select a size</span>}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {product.sizes.map((s) => (
@@ -189,7 +189,7 @@ export function ProductDetail({
 
           {product.ingredients && (
             <details className="mt-6 rounded-2xl border bg-card p-5">
-              <summary className="cursor-pointer font-bold">Ingredients</summary>
+              <summary className="cursor-pointer font-bold">Material &amp; care</summary>
               <p className="mt-2 text-sm text-muted-foreground">{product.ingredients}</p>
             </details>
           )}
@@ -199,6 +199,9 @@ export function ProductDetail({
       {/* Reviews */}
       <section id="reviews" className="mt-16 scroll-mt-24">
         <h2 className="text-2xl font-bold">What customers say</h2>
+        {reviews.length === 0 && (
+          <p className="mt-2 text-sm text-muted-foreground">No reviews yet.</p>
+        )}
         {reviews.length > 0 && (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {reviews.map((r) => (

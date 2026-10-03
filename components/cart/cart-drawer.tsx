@@ -81,7 +81,7 @@ export function CartDrawer() {
                 onClick={close}
                 className={cn(buttonVariants(), "mt-5 rounded-full")}
               >
-                Shop drinks
+                Start shopping
               </Link>
             </div>
           ) : (

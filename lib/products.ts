@@ -133,13 +133,38 @@ export async function getProductReviews(productId: string): Promise<ReviewView[]
     images: [],
     verified: false,
   }));
+  // Sample reviews only in demo mode — a live store shows real reviews only.
   if (!hasDatabase) return demo;
   try {
-    // Real customer reviews first, then the sample reviews.
-    return [...(await loadProductReviews(productId)), ...demo];
+    return await loadProductReviews(productId);
   } catch (err) {
     console.error("getProductReviews failed", err);
-    return demo;
+    return [];
+  }
+}
+
+export type HomepageReview = { author: string; rating: number; comment: string };
+
+const loadHomepageReviews = unstable_cache(
+  async (): Promise<HomepageReview[]> =>
+    db.review.findMany({
+      where: { rating: { gte: 4 }, comment: { not: "" } },
+      orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
+      take: 4,
+      select: { author: true, rating: true, comment: true },
+    }),
+  ["products:homepage-reviews:v1"],
+  { tags: [CACHE_TAGS.reviews], revalidate: CATALOG_TTL },
+);
+
+/** Best recent customer reviews for the homepage (sample ones in demo mode). */
+export async function getHomepageReviews(): Promise<HomepageReview[]> {
+  if (!hasDatabase) return demoReviews;
+  try {
+    return await loadHomepageReviews();
+  } catch (err) {
+    console.error("getHomepageReviews failed", err);
+    return [];
   }
 }
 

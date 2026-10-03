@@ -2,23 +2,29 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
-import { demoProducts, demoReviews } from "../lib/demo-data";
+import { demoProducts } from "../lib/demo-data";
 
 neonConfig.webSocketConstructor = ws;
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
 
+/*
+ * Sample products for trying the store. Delete them in /admin/products
+ * before launch. No reviews are seeded: reviews on a live store must come
+ * from real customers.
+ */
+const CATEGORY_BY_TYPE = {
+  DRINK: { name: "Everyday", slug: "everyday" },
+  GUMMY: { name: "Home", slug: "home" },
+  BUNDLE: { name: "Gift sets", slug: "gift-sets" },
+} as const;
+
 async function main() {
-  const drinks = await db.category.upsert({
-    where: { slug: "drinks" },
-    update: {},
-    create: { name: "Sparkling Drinks", slug: "drinks" },
-  });
-  const gummies = await db.category.upsert({
-    where: { slug: "gummies" },
-    update: {},
-    create: { name: "Mood Gummies", slug: "gummies" },
-  });
+  const categoryIds: Record<string, string> = {};
+  for (const [type, c] of Object.entries(CATEGORY_BY_TYPE)) {
+    const cat = await db.category.upsert({ where: { slug: c.slug }, update: {}, create: c });
+    categoryIds[type] = cat.id;
+  }
 
   for (const p of demoProducts) {
     const data = {
@@ -37,31 +43,15 @@ async function main() {
       stock: p.stock,
       featured: p.featured,
     };
-    const product = await db.product.upsert({
+    await db.product.upsert({
       where: { slug: p.slug },
       update: data,
       create: {
         ...data,
         slug: p.slug,
-        categoryId: p.type === "GUMMY" ? gummies.id : drinks.id,
+        categoryId: categoryIds[p.type],
       },
     });
-
-    if (p.featured && p.type === "DRINK") {
-      const existing = await db.review.count({ where: { productId: product.id } });
-      if (existing === 0) {
-        for (const r of demoReviews.slice(0, 2)) {
-          await db.review.create({
-            data: {
-              productId: product.id,
-              author: r.author,
-              rating: r.rating,
-              comment: r.comment,
-            },
-          });
-        }
-      }
-    }
   }
 
   console.log(`Seeded ${demoProducts.length} products.`);

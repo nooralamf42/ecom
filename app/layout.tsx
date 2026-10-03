@@ -80,7 +80,12 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <SiteSettingsProvider value={clientSettings}>
           <SmoothScrollProvider>
-            <Navbar categories={categories} />
+            <Navbar
+              categories={categories}
+              extraLinks={footerPages
+                .filter((p) => p.slug === "about")
+                .map((p) => ({ href: `/${p.slug}`, label: p.title }))}
+            />
             <main className="flex-1">{children}</main>
             <Footer categories={categories} identity={settings.identity} pages={footerPages} />
             <CartDrawer />

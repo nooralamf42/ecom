@@ -28,7 +28,7 @@ export default function CartPage() {
           </div>
           <h1 className="font-heading text-3xl font-bold">Your bag is empty</h1>
           <p className="mt-2 text-muted-foreground">
-            Let&apos;s add a little joy to it.
+            Find something you&apos;ll love.
           </p>
           <Link href="/products" className={cn(buttonVariants({ size: "lg" }), "mt-6 rounded-full")}>
             Shop products

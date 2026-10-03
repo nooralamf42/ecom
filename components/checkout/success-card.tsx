@@ -42,7 +42,7 @@ export function SuccessCard({
         >
           {demo
             ? "This is a demo order — add your Razorpay keys to take real payments. "
-            : "Your order is confirmed and on its way to being packed with joy. "}
+            : "Your order is confirmed and on its way to being packed with care. "}
           {orderNumber && (
             <>
               Your order number is{" "}

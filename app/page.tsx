@@ -5,14 +5,15 @@ import { Features } from "@/components/home/features";
 import { Testimonials } from "@/components/home/testimonials";
 import { BundlePromo } from "@/components/home/bundle-promo";
 import { Faq } from "@/components/home/faq";
-import { getProducts } from "@/lib/products";
+import { getHomepageReviews, getProducts } from "@/lib/products";
 import { getSettings, toCommerceRules } from "@/lib/settings";
 
 export default async function HomePage() {
-  const [featured, all, settings] = await Promise.all([
+  const [featured, all, settings, reviews] = await Promise.all([
     getProducts({ featured: true }),
     getProducts(),
     getSettings(),
+    getHomepageReviews(),
   ]);
   const home = settings.homepage;
   const show = home.sections;
@@ -37,7 +38,7 @@ export default async function HomePage() {
         />
       )}
       {show.features && <Features content={home.features} />}
-      {show.testimonials && <Testimonials content={home.testimonials} />}
+      {show.testimonials && <Testimonials content={home.testimonials} reviews={reviews} />}
       {show.promo && <BundlePromo content={home.promo} rules={toCommerceRules(settings)} />}
       {show.faq && <Faq content={home.faq} />}
     </>
