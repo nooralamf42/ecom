@@ -79,3 +79,23 @@ export function samePhone(a: string, b: string): boolean {
   const db = b.replace(/\D/g, "").slice(-10);
   return da.length === 10 && da === db;
 }
+
+/**
+ * Secret code for an order's link in emails. Opening /orders/{n}/open?t=…
+ * remembers the order on that browser, so customers can view it from the
+ * email on any device without an account.
+ */
+export function orderLinkToken(orderNumber: number): string | null {
+  if (!guestAccessEnabled) return null;
+  return crypto
+    .createHmac("sha256", secret()!)
+    .update(`order-link|${orderNumber}`)
+    .digest("base64url")
+    .slice(0, 32);
+}
+
+export function isValidOrderLinkToken(orderNumber: number, token: string): boolean {
+  const expected = orderLinkToken(orderNumber);
+  if (!expected || token.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}

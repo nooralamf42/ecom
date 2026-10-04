@@ -70,6 +70,33 @@ const emptyForm: AddressInput = {
   pincode: "",
 };
 
+// Guest checkout details remembered on this device (signed-in customers get
+// server-saved addresses instead). Only ever read back into this form.
+const DETAILS_KEY = "checkout-details:v1";
+
+function loadSavedDetails(): Partial<AddressInput> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(DETAILS_KEY) ?? "null");
+    if (!raw || typeof raw !== "object") return {};
+    const out: Partial<AddressInput> = {};
+    for (const key of Object.keys(emptyForm) as (keyof AddressInput)[]) {
+      if (typeof raw[key] === "string") out[key] = raw[key].slice(0, 200);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function storeDetails(details: AddressInput | null) {
+  try {
+    if (details) localStorage.setItem(DETAILS_KEY, JSON.stringify(details));
+    else localStorage.removeItem(DETAILS_KEY);
+  } catch {
+    /* storage blocked (private mode) — nothing to remember */
+  }
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { lines, clear } = useCart();
@@ -78,6 +105,7 @@ export default function CheckoutPage() {
   const branding = useRazorpayBranding();
   const [form, setForm] = useState<AddressInput>(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [rememberDetails, setRememberDetails] = useState(true);
 
   const [authState, setAuthState] = useState<{ isSignedIn: boolean; email?: string }>({
     isSignedIn: false,
@@ -101,6 +129,19 @@ export default function CheckoutPage() {
       router.replace("/products");
     }
   }, [hydrated, lines.length, loading, router]);
+
+  // Fill the form from details remembered on this device, without overwriting typing.
+  useEffect(() => {
+    const saved = loadSavedDetails();
+    if (Object.keys(saved).length === 0) return;
+    setForm((f) => {
+      const next = { ...f };
+      for (const key of Object.keys(saved) as (keyof AddressInput)[]) {
+        if (!next[key]) next[key] = saved[key]!;
+      }
+      return next;
+    });
+  }, []);
 
   // Prefill email for signed-in users so it's one less thing to type.
   useEffect(() => {
@@ -191,6 +232,8 @@ export default function CheckoutPage() {
         setLoading(false);
         return;
       }
+
+      if (!isSignedIn) storeDetails(rememberDetails ? parsed.data : null);
 
       // Demo mode: no Razorpay configured — confirm a draft order.
       if (data.demo || !data.razorpayOrderId || !data.keyId) {
@@ -404,6 +447,23 @@ export default function CheckoutPage() {
                 />
               </div>
             </div>
+          )}
+
+          {showForm && !isSignedIn && (
+            <label className="mt-5 flex cursor-pointer items-start gap-2.5 text-sm">
+              <input
+                type="checkbox"
+                checked={rememberDetails}
+                onChange={(e) => setRememberDetails(e.target.checked)}
+                className="mt-0.5 size-4 accent-primary"
+              />
+              <span>
+                <span className="font-medium">Save my details on this device for next time</span>
+                <span className="block text-xs text-muted-foreground">
+                  Untick on a shared or public computer.
+                </span>
+              </span>
+            </label>
           )}
 
           {!showForm && selectedId && (

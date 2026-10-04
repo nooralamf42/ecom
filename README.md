@@ -71,12 +71,19 @@ Set `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD` and `SHIPROCKET_PICKUP_LOCATION` (
 nickname from your Shiprocket dashboard). Shipping a paid order from **Admin → Orders**
 creates the shipment and label.
 
-### 7. Make it yours
+### 7. Resend (order emails)
+Customers get an order confirmation email when their payment goes through. Create an API key at
+https://resend.com, verify your domain there, and set `RESEND_API_KEY` and
+`EMAIL_FROM` (e.g. `My Store <orders@mystore.com>`). The email uses your store name, logo,
+colors and contact details from **Settings**. Use a PNG or JPG logo, because Gmail and Outlook
+don't display SVG. Replies go to the contact email set in Settings.
+
+### 8. Make it yours
 In **Admin → Settings**: set the store name, upload a logo, pick colors, write the homepage,
 set shipping rules, and enter your live domain under *Website address* (used for share links
 and `sitemap.xml`). Then add products.
 
-### 8. Deploy
+### 9. Deploy
 Deploy to Vercel (or any Node host). Copy every `.env` value into the host's environment
 variables and set `NEXT_PUBLIC_APP_URL` to your domain. `npm run build` runs `prisma generate`.
 

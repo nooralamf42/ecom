@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import { db } from "./db";
+import { emailEnabled, sendOrderConfirmation } from "./email";
 
 export type MarkPaidResult =
   | { status: "paid"; orderNumber: number } // moved PENDING -> PAID now
@@ -11,6 +13,8 @@ export type MarkPaidResult =
  * webhook, and safe to call repeatedly: Razorpay may report the same payment
  * through both, and through several webhook events. Only a PENDING order
  * moves to PAID, so a replayed confirmation can't pull a shipped order back.
+ * Must run inside a request (Route Handler / Server Action): it schedules the
+ * confirmation email with after().
  */
 export async function markOrderPaid(
   razorpayOrderId: string,
@@ -23,10 +27,21 @@ export async function markOrderPaid(
 
   const order = await db.order.findUnique({
     where: { razorpayOrderId },
-    select: { number: true, status: true },
+    select: { id: true, number: true, status: true },
   });
   if (!order) return { status: "unknown-order" };
-  if (count > 0) return { status: "paid", orderNumber: order.number };
+  if (count > 0) {
+    // This call made it PAID, so it alone sends the confirmation — after the
+    // response, so a slow email service never delays the customer.
+    if (emailEnabled) {
+      after(() =>
+        sendOrderConfirmation(order.id).catch((err) =>
+          console.error(`Order #${order.number}: confirmation email failed`, err),
+        ),
+      );
+    }
+    return { status: "paid", orderNumber: order.number };
+  }
   if (order.status === "CANCELLED") return { status: "cancelled", orderNumber: order.number };
   return { status: "already-paid", orderNumber: order.number };
 }

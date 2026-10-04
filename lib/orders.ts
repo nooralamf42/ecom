@@ -60,36 +60,60 @@ function guestOrdersForEmails(emails: string[]) {
 }
 
 /**
- * Orders to show on "My orders": the signed-in account's orders (guest
- * orders placed with a verified email of theirs are attached to the account
- * first), plus any guest orders remembered on this browser.
+ * Orders for "My orders".
+ * - Signed in: the account's orders. Guest orders placed with one of their
+ *   verified emails are attached first. Other guest orders remembered on this
+ *   browser come back separately as `deviceOrders`, for the customer to add
+ *   to their account themselves (on a shared computer they may not be theirs).
+ * - Signed out: the guest orders remembered on this browser.
  */
 export async function getMyOrders() {
-  if (!hasDatabase) return [];
+  const empty = { orders: [], deviceOrders: [] };
+  if (!hasDatabase) return empty;
   const [user, emails, guestNumbers] = await Promise.all([
     getDbUser(),
     getVerifiedEmails(),
     getGuestOrderNumbers(),
   ]);
+  const include = { items: true } as const;
+  const orderBy = { createdAt: "desc" } as const;
 
-  if (user && emails.length > 0) {
+  if (!user) {
+    if (guestNumbers.length === 0) return empty;
+    const orders = await db.order.findMany({ where: { number: { in: guestNumbers } }, include, orderBy });
+    return { orders, deviceOrders: [] };
+  }
+
+  if (emails.length > 0) {
     await db.order.updateMany({
       where: { OR: guestOrdersForEmails(emails) },
       data: { userId: user.id },
     });
   }
+  const [orders, deviceOrders] = await Promise.all([
+    db.order.findMany({ where: { userId: user.id }, include, orderBy }),
+    guestNumbers.length > 0
+      ? db.order.findMany({ where: { number: { in: guestNumbers }, userId: null }, include, orderBy })
+      : [],
+  ]);
+  return { orders, deviceOrders };
+}
 
-  const where = [
-    ...(user ? [{ userId: user.id }] : []),
-    ...(guestNumbers.length > 0 ? [{ number: { in: guestNumbers } }] : []),
-  ];
-  if (where.length === 0) return [];
-
-  return db.order.findMany({
-    where: { OR: where },
-    include: { items: true },
-    orderBy: { createdAt: "desc" },
+/**
+ * Attach guest orders remembered on this browser to the signed-in account.
+ * Only numbers in this browser's signed cookie are accepted.
+ */
+export async function claimDeviceOrders(orderNumbers: number[]): Promise<number> {
+  if (!hasDatabase) return 0;
+  const [user, guestNumbers] = await Promise.all([getDbUser(), getGuestOrderNumbers()]);
+  if (!user) return 0;
+  const allowed = orderNumbers.filter((n) => guestNumbers.includes(n));
+  if (allowed.length === 0) return 0;
+  const { count } = await db.order.updateMany({
+    where: { number: { in: allowed }, userId: null },
+    data: { userId: user.id },
   });
+  return count;
 }
 
 /** One order, or null if it doesn't exist or this visitor may not see it. */

@@ -6,6 +6,7 @@ import { clerkEnabled } from "@/lib/auth-config";
 import { formatPrice } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { PendingOrderActions } from "@/components/orders/pending-order-actions";
+import { DeviceOrdersPrompt } from "@/components/orders/device-orders-prompt";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ export const metadata = { title: "My orders" };
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-  const [orders, signedIn] = await Promise.all([
+  const [{ orders, deviceOrders }, signedIn] = await Promise.all([
     getMyOrders(),
     clerkEnabled ? auth().then((a) => Boolean(a.userId)) : false,
   ]);
@@ -44,6 +45,17 @@ export default async function OrdersPage() {
             </Link>
           </div>
         </div>
+      )}
+
+      {signedIn && deviceOrders.length > 0 && (
+        <DeviceOrdersPrompt
+          orders={deviceOrders.map((o) => ({
+            number: o.number,
+            total: o.total,
+            createdAt: o.createdAt.toISOString(),
+            itemCount: o.items.length,
+          }))}
+        />
       )}
 
       {orders.length === 0 ? (

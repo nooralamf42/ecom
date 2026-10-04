@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db, hasDatabase } from "@/lib/db";
-import { getOrderByNumber } from "@/lib/orders";
+import { claimDeviceOrders, getOrderByNumber } from "@/lib/orders";
 import { razorpay, razorpayEnabled } from "@/lib/razorpay";
 
 type RetryResult = {
@@ -77,4 +77,19 @@ export async function cancelOrderAction(
   revalidatePath("/orders");
   revalidatePath(`/orders/${orderNumber}`);
   return { ok: true };
+}
+
+/** "Add to my account" for guest orders placed on this browser. */
+export async function claimDeviceOrdersAction(
+  orderNumbers: number[],
+): Promise<{ ok: boolean; claimed?: number; error?: string }> {
+  try {
+    const claimed = await claimDeviceOrders(orderNumbers);
+    if (claimed === 0) return { ok: false, error: "Sign in first, then try again." };
+    revalidatePath("/orders");
+    return { ok: true, claimed };
+  } catch (err) {
+    console.error("claimDeviceOrdersAction failed", err);
+    return { ok: false, error: "Couldn't add the orders. Please try again." };
+  }
 }
