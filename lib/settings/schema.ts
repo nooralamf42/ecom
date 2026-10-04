@@ -15,6 +15,14 @@ import { contrastRatio } from "./color";
 const text = (max: number, fallback = "") => z.string().trim().max(max).default(fallback);
 
 /** Empty, or an https:// URL (logos, images). */
+/** Empty, or a valid email address. */
+const optionalEmail = z
+  .string()
+  .trim()
+  .max(120)
+  .refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email")
+  .default("");
+
 const imageUrl = z
   .string()
   .trim()
@@ -54,12 +62,9 @@ export const identitySchema = z.object({
   tagline: text(120, "Quality products, delivered to your door."),
   logoUrl: imageUrl,
   faviconUrl: imageUrl,
-  contactEmail: z
-    .string()
-    .trim()
-    .max(120)
-    .refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email")
-    .default(""),
+  contactEmail: optionalEmail,
+  /** Sender address for order emails; must be on a domain verified in Resend. Sender name = store name. */
+  emailFromAddress: optionalEmail,
   contactPhone: text(30),
   whatsapp: text(30),
   address: text(300),

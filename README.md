@@ -73,9 +73,9 @@ creates the shipment and label.
 
 ### 7. Resend (order emails)
 Customers get an order confirmation email when their payment goes through. Create an API key at
-https://resend.com, verify your domain there, and set `RESEND_API_KEY` and
-`EMAIL_FROM` (e.g. `My Store <orders@mystore.com>`). The email uses your store name, logo,
-colors and contact details from **Settings**. Use a PNG or JPG logo, because Gmail and Outlook
+https://resend.com, verify your domain there, and set `RESEND_API_KEY`. Then enter the sender
+address (e.g. `orders@mystore.com`) under **Settings → Store & SEO → Order emails**. Emails go
+out under your store name, and use your logo, colors and contact details from **Settings**. Use a PNG or JPG logo, because Gmail and Outlook
 don't display SVG. Replies go to the contact email set in Settings.
 
 ### 8. Make it yours

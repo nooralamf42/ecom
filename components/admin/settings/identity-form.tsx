@@ -91,6 +91,21 @@ export function IdentityForm({ initial }: { initial: IdentitySettings }) {
         />
       </SettingsCard>
 
+      <SettingsCard
+        title="Order emails"
+        description="Customers get an order confirmation email from your store when they pay."
+      >
+        <TextField
+          label="Send emails from"
+          type="email"
+          placeholder="orders@yourstore.com"
+          hint={`Emails arrive from "${v.storeName || "your store"}" <this address>. The domain must be verified in your Resend account. Customer replies go to your contact email above.`}
+          value={v.emailFromAddress}
+          onChange={(emailFromAddress) => patch({ emailFromAddress })}
+          error={errors.emailFromAddress}
+        />
+      </SettingsCard>
+
       <SettingsCard title="Social links" description="Full profile links. Empty ones are hidden.">
         <div className="grid gap-4 sm:grid-cols-2">
           {(

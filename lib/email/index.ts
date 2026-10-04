@@ -4,18 +4,23 @@ import { db, hasDatabase } from "@/lib/db";
 import { getSettings, siteBaseUrl } from "@/lib/settings";
 import { orderLinkToken } from "@/lib/order-access";
 import { OrderConfirmationEmail } from "./order-confirmation-email";
+import type { IdentitySettings } from "@/lib/settings/schema";
 
 export const emailEnabled = Boolean(process.env.RESEND_API_KEY);
 
 const resend = emailEnabled ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**
- * Sender address. Must be on a domain verified in Resend, e.g.
- * "Bangleish <orders@bangleish.com>". Without EMAIL_FROM, Resend's test
- * sender is used, which only delivers to your own Resend account email.
+ * "Store Name <address>". The name is always the store name from Settings;
+ * the address comes from Settings → Store & SEO → Order emails, then the
+ * EMAIL_FROM env var, then Resend's test sender (which only delivers to the
+ * Resend account owner's own email).
  */
-function fromAddress(storeName: string): string {
-  return process.env.EMAIL_FROM || `${storeName} <onboarding@resend.dev>`;
+export function fromHeader(identity: IdentitySettings): string {
+  const envAddress = process.env.EMAIL_FROM?.match(/<([^>]+)>/)?.[1] ?? process.env.EMAIL_FROM;
+  const address = identity.emailFromAddress || envAddress?.trim() || "onboarding@resend.dev";
+  const name = identity.storeName.replace(/["<>\r\n]/g, "").trim() || "Store";
+  return `"${name}" <${address}>`;
 }
 
 /** Link in emails that opens the order on any device (falls back to the order page). */
@@ -55,7 +60,7 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
 
   const { error } = await resend.emails.send(
     {
-      from: fromAddress(identity.storeName),
+      from: fromHeader(identity),
       to: order.email,
       ...(identity.contactEmail ? { replyTo: identity.contactEmail } : {}),
       subject: `Order #${order.number} confirmed — ${identity.storeName}`,
