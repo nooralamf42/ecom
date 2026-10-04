@@ -25,6 +25,7 @@ export function AddToCartButton({
   size?: ComponentProps<typeof Button>["size"];
 }) {
   const add = useCart((s) => s.add);
+  const openCart = useCart((s) => s.open);
   const soldOut = product.stock <= 0;
   const needsSize = product.sizes.length > 0 && !selectedSize;
 
@@ -51,7 +52,9 @@ export function AddToCartButton({
           },
           qty,
         );
-        toast.success(`${product.name} added to your cart`);
+        toast.success(`${product.name} added to your cart`, {
+          action: { label: "View cart", onClick: openCart },
+        });
       }}
     >
       {soldOut ? "Sold out" : (children ?? "Add to cart")}

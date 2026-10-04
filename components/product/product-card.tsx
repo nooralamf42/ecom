@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { ProductMedia } from "./product-media";
 import { AddToCartButton } from "./add-to-cart-button";
+import { QuickAddSize } from "./quick-add-size";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, discountPercent } from "@/lib/format";
 import type { StoreProduct } from "@/lib/types";
@@ -68,13 +69,7 @@ export function ProductCard({
             )}
           </div>
           {product.sizes.length > 0 ? (
-            <Link
-              href={`/products/${product.slug}`}
-              aria-label={`Choose a size for ${product.name}`}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-transform hover:scale-105"
-            >
-              <Plus className="size-5" />
-            </Link>
+            <QuickAddSize product={product} />
           ) : (
             <AddToCartButton
               product={product}

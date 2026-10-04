@@ -151,8 +151,8 @@ export function ProductDetail({
           )}
 
           {/* Quantity + add */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1 rounded-full border p-1.5">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-1 self-start rounded-full border p-1.5">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 className="grid size-9 place-items-center rounded-full hover:bg-muted"
@@ -174,7 +174,7 @@ export function ProductDetail({
               qty={qty}
               selectedSize={selectedSize}
               size="lg"
-              className="flex-1 rounded-full text-base sm:flex-none sm:px-10"
+              className="h-12 w-full rounded-full text-base sm:h-11 sm:w-auto sm:px-10"
             >
               Add to cart · {formatPrice(product.price * qty)}
             </AddToCartButton>

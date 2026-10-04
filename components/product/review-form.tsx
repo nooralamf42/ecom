@@ -25,6 +25,14 @@ export function ReviewForm({ productId }: { productId: string }) {
 function ReviewFormBody({ productId }: { productId: string }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const [elig, setElig] = useState<Eligibility | null>(null);
+  // If Clerk never loads (blocked, offline, or a domain misconfiguration),
+  // stop the spinner after a while instead of loading forever.
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+  useEffect(() => {
+    if (isLoaded) return;
+    const t = setTimeout(() => setAuthTimedOut(true), 8000);
+    return () => clearTimeout(t);
+  }, [isLoaded]);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -49,7 +57,12 @@ function ReviewFormBody({ productId }: { productId: string }) {
     <div id="write-review" className="mt-10 rounded-3xl border bg-card p-6">
       <h3 className="text-lg font-bold">Write a review</h3>
 
-      {!isLoaded ? (
+      {!isLoaded && authTimedOut ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign-in couldn&apos;t load right now, so reviews can&apos;t be written. Please refresh the
+          page or try again later.
+        </p>
+      ) : !isLoaded ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> Loading…
         </p>
