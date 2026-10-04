@@ -21,7 +21,7 @@ export function SettingsCard({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-2xl border bg-card p-5 sm:p-6", className)}>
+    <section className={cn("rounded-2xl border bg-card p-4 sm:p-6", className)}>
       <h3 className="font-heading text-lg font-bold">{title}</h3>
       {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       <div className="mt-5 space-y-4">{children}</div>
@@ -219,11 +219,11 @@ export function SaveBar({
   onReset: () => void;
 }) {
   return (
-    <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-2xl border bg-background/95 p-3 shadow-lg backdrop-blur">
-      <p className="pl-2 text-sm text-muted-foreground">
+    <div className="sticky bottom-3 z-10 flex items-center justify-between gap-2 rounded-2xl border bg-background/95 p-2.5 shadow-lg backdrop-blur sm:bottom-4 sm:gap-3 sm:p-3">
+      <p className="min-w-0 pl-1.5 text-xs text-muted-foreground sm:pl-2 sm:text-sm">
         {dirty ? "You have unsaved changes" : "All changes saved"}
       </p>
-      <div className="flex gap-2">
+      <div className="flex shrink-0 gap-1 sm:gap-2">
         <Button
           type="button"
           variant="ghost"

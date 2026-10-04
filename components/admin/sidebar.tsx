@@ -17,8 +17,9 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="lg:sticky lg:top-20 lg:h-max">
-      <nav className="flex gap-1 overflow-x-auto lg:flex-col">
+    <aside className="min-w-0 lg:sticky lg:top-20 lg:h-max">
+      {/* Phones: every section visible as a 3×2 grid. Desktop: a vertical sidebar. */}
+      <nav className="grid grid-cols-3 gap-1.5 lg:flex lg:flex-col lg:gap-1">
         {links.map((l) => {
           const active = l.exact
             ? pathname === l.href
@@ -28,10 +29,10 @@ export function AdminSidebar() {
               key={l.href}
               href={l.href}
               className={cn(
-                "flex items-center gap-2.5 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors",
+                "flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2 py-2 text-xs font-semibold transition-colors sm:text-sm lg:justify-start lg:gap-2.5 lg:px-4 lg:py-2.5",
                 active
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground lg:bg-transparent",
               )}
             >
               <l.icon className="size-4" />
@@ -41,7 +42,7 @@ export function AdminSidebar() {
         })}
         <Link
           href="/"
-          className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-muted/60 px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground sm:text-sm lg:justify-start lg:gap-2.5 lg:bg-transparent lg:px-4 lg:py-2.5"
         >
           <Store className="size-4" />
           View store

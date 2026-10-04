@@ -31,10 +31,10 @@ export function SettingsTabs({
         window.history.replaceState(null, "", url);
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TabsList className="h-auto flex-wrap">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <TabsList className="grid w-full grid-cols-2 gap-1 group-data-horizontal/tabs:h-auto sm:inline-flex sm:w-fit">
           {SETTINGS_TABS.map((t) => (
-            <TabsTrigger key={t.value} value={t.value} className="px-3 py-1.5">
+            <TabsTrigger key={t.value} value={t.value} className="px-3 py-2 sm:py-1.5">
               {t.label}
             </TabsTrigger>
           ))}
@@ -69,7 +69,7 @@ function RefreshCacheButton() {
       variant="outline"
       size="sm"
       disabled={busy}
-      className="rounded-full"
+      className="w-full rounded-full sm:w-auto"
       title="Use after importing products or editing the database directly"
       onClick={async () => {
         setBusy(true);

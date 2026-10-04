@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { FileDown, Loader2, RotateCw, Truck, X } from "lucide-react";
 import { fulfillOrderAction, adminCancelOrderAction } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Props = {
   orderId: string;
@@ -14,6 +15,8 @@ type Props = {
   courierName: string | null;
   labelUrl: string | null;
   trackingUrl: string | null;
+  /** Side to line the buttons up on: "end" in the desktop table, "start" in phone cards. */
+  align?: "start" | "end";
 };
 
 export function OrderActions({
@@ -23,6 +26,7 @@ export function OrderActions({
   courierName,
   labelUrl,
   trackingUrl,
+  align = "end",
 }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -66,7 +70,7 @@ export function OrderActions({
   const isRetry = status === "FULFILLED";
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
+    <div className={cn("flex flex-col gap-1.5", align === "start" ? "items-start" : "items-end")}>
       {status === "PENDING" && (
         <Button
           size="sm"

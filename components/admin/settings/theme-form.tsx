@@ -39,7 +39,7 @@ export function ThemeForm({ initial }: { initial: ThemeSettings }) {
       className="space-y-5"
     >
       <SettingsCard title="Color palette" description="Start from a preset, then fine-tune any color.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           {(Object.keys(THEME_PRESETS) as ThemePresetKey[]).map((key) => {
             const p = THEME_PRESETS[key];
             const active = v.preset === key;

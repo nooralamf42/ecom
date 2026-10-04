@@ -17,49 +17,86 @@ export default async function AdminOrdersPage() {
           No orders yet. Paid orders will appear here ready to fulfill.
         </p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b text-left text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Order</th>
-                <th className="px-4 py-3 font-semibold">Customer</th>
-                <th className="px-4 py-3 font-semibold">Total</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-muted/40">
-                  <td className="px-4 py-3">
-                    <p className="font-semibold">#{o.number}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(o.createdAt).toLocaleDateString("en-IN")}
+        <>
+          {/* Phones: one card per order */}
+          <ul className="mt-4 space-y-3 md:hidden">
+            {orders.map((o) => (
+              <li key={o.id} className="rounded-2xl border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold">
+                      #{o.number}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {new Date(o.createdAt).toLocaleDateString("en-IN")}
+                      </span>
                     </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{o.shipName}</p>
-                    <p className="text-xs text-muted-foreground">{o.email}</p>
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{formatPrice(o.total)}</td>
-                  <td className="px-4 py-3">
+                    <p className="mt-0.5 truncate text-sm font-medium">{o.shipName}</p>
+                    <p className="truncate text-xs text-muted-foreground">{o.email}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <OrderStatusBadge status={o.status} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <OrderActions
-                      orderId={o.id}
-                      status={o.status}
-                      awbCode={o.awbCode}
-                      courierName={o.courierName}
-                      labelUrl={o.labelUrl}
-                      trackingUrl={o.trackingUrl}
-                    />
-                  </td>
+                    <span className="font-bold">{formatPrice(o.total)}</span>
+                  </div>
+                </div>
+                <div className="mt-3 border-t pt-3">
+                  <OrderActions
+                    align="start"
+                    orderId={o.id}
+                    status={o.status}
+                    awbCode={o.awbCode}
+                    courierName={o.courierName}
+                    labelUrl={o.labelUrl}
+                    trackingUrl={o.trackingUrl}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 hidden overflow-x-auto rounded-2xl border bg-card md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b text-left text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Order</th>
+                  <th className="px-4 py-3 font-semibold">Customer</th>
+                  <th className="px-4 py-3 font-semibold">Total</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y">
+                {orders.map((o) => (
+                  <tr key={o.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3">
+                      <p className="font-semibold">#{o.number}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(o.createdAt).toLocaleDateString("en-IN")}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{o.shipName}</p>
+                      <p className="text-xs text-muted-foreground">{o.email}</p>
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{formatPrice(o.total)}</td>
+                    <td className="px-4 py-3">
+                      <OrderStatusBadge status={o.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <OrderActions
+                        orderId={o.id}
+                        status={o.status}
+                        awbCode={o.awbCode}
+                        courierName={o.courierName}
+                        labelUrl={o.labelUrl}
+                        trackingUrl={o.trackingUrl}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

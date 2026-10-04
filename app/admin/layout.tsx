@@ -36,9 +36,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="container-page py-10">
+    <div className="container-page py-6 sm:py-10">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold">Store admin</h1>
+        <h1 className="font-heading text-2xl font-bold sm:text-3xl">Store admin</h1>
       </div>
 
       {demo && (
@@ -48,7 +48,8 @@ export default async function AdminLayout({
         </div>
       )}
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[200px_1fr]">
+      {/* minmax(0,…) + min-w-0 keep wide content (tables, menus) from stretching the page on phones. */}
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 sm:mt-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8">
         <AdminSidebar />
         <div className="min-w-0">{children}</div>
       </div>
