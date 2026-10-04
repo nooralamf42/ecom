@@ -68,6 +68,21 @@ export default async function OrderDetailPage({
         </div>
       )}
 
+      {order.refundedAmount > 0 && (
+        <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm">
+          <p className="font-semibold text-rose-900">
+            {order.refundStatus === "failed"
+              ? "Your refund couldn't be completed"
+              : `Refund of ${formatPrice(order.refundedAmount)} issued`}
+          </p>
+          <p className="mt-0.5 text-rose-800">
+            {order.refundStatus === "failed"
+              ? "We're looking into it and will try again — no action needed from you."
+              : "It goes back to your original payment method. Banks usually take 5–7 business days to show it."}
+          </p>
+        </div>
+      )}
+
       {order.awbCode && (
         <div className="mt-6 flex items-center gap-3 rounded-2xl bg-brand-mint/30 p-4">
           <Truck className="size-5" />

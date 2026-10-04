@@ -62,6 +62,9 @@ Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `NEXT_PUBLIC_RAZORPAY_KEY_ID`. 
 **test** keys (test card `4111 1111 1111 1111`, any future expiry/CVV). Add a webhook to
 `/api/webhooks/razorpay` (event `payment.captured`) and set `RAZORPAY_WEBHOOK_SECRET`.
 
+Optionally also subscribe the webhook to `refund.processed` and `refund.failed`, so refunds
+issued from **Admin → Orders → Refund** show their final status.
+
 Razorpay reviews your Terms, Privacy, Refund, Shipping and Contact pages before enabling live
 mode. The starter pages from step 2 cover these. Fill in your contact details under
 **Settings → Store & SEO** and read every page before applying.
@@ -71,8 +74,15 @@ Set `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD` and `SHIPROCKET_PICKUP_LOCATION` (
 nickname from your Shiprocket dashboard). Shipping a paid order from **Admin → Orders**
 creates the shipment and label.
 
+For live status updates (and the "shipped" / "delivered" emails), add a webhook in Shiprocket
+under **Settings → API → Webhooks** with the URL `https://yourdomain.com/api/webhooks/courier`.
+Use a long random token as the security token (x-api-key), and put the same value in
+`SHIPROCKET_WEBHOOK_TOKEN`. Without the webhook, statuses still update whenever an order page is
+opened.
+
 ### 7. Resend (order emails)
-Customers get an order confirmation email when their payment goes through. Create an API key at
+Customers get emails when their payment goes through, when the order ships, when it's
+delivered, and when you refund it. You can re-send any of them from **Admin → Orders → Email**. Create an API key at
 https://resend.com, verify your domain there, and set `RESEND_API_KEY`. Then enter the sender
 address (e.g. `orders@mystore.com`) under **Settings → Store & SEO → Order emails**. Emails go
 out under your store name, and use your logo, colors and contact details from **Settings**. Use a PNG or JPG logo, because Gmail and Outlook

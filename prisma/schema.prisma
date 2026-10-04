@@ -140,6 +140,17 @@ model Order {
   trackingUrl          String?
   labelUrl             String?
 
+  // Customer emails: kinds sent so far ("confirmed", "shipped", "delivered",
+  // "refunded") and the last send error, shown in the admin.
+  emailsSent String[] @default([])
+  emailError String?
+
+  // Refunds (Razorpay). refundStatus is "requesting" while a refund call is
+  // in flight (a lock against double refunds), then Razorpay's status.
+  refundedAmount   Int     @default(0)
+  refundStatus     String?
+  razorpayRefundId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

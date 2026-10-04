@@ -2,6 +2,7 @@ import { getAllOrders } from "@/lib/orders";
 import { formatPrice } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderActions } from "@/components/admin/order-actions";
+import { OrderExtras } from "@/components/admin/order-extras";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,18 @@ export default async function AdminOrdersPage() {
                     labelUrl={o.labelUrl}
                     trackingUrl={o.trackingUrl}
                   />
+                  <OrderExtras
+                    align="start"
+                    orderId={o.id}
+                    orderNumber={o.number}
+                    status={o.status}
+                    total={o.total}
+                    refundedAmount={o.refundedAmount}
+                    refundStatus={o.refundStatus}
+                    hasPayment={Boolean(o.razorpayPaymentId)}
+                    emailsSent={o.emailsSent}
+                    emailError={o.emailError}
+                  />
                 </div>
               </li>
             ))}
@@ -89,6 +102,17 @@ export default async function AdminOrdersPage() {
                         courierName={o.courierName}
                         labelUrl={o.labelUrl}
                         trackingUrl={o.trackingUrl}
+                      />
+                      <OrderExtras
+                        orderId={o.id}
+                        orderNumber={o.number}
+                        status={o.status}
+                        total={o.total}
+                        refundedAmount={o.refundedAmount}
+                        refundStatus={o.refundStatus}
+                        hasPayment={Boolean(o.razorpayPaymentId)}
+                        emailsSent={o.emailsSent}
+                        emailError={o.emailError}
                       />
                     </td>
                   </tr>

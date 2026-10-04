@@ -6,6 +6,9 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { assertAdmin } from "@/lib/admin-guard";
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { fulfillOrder } from "@/lib/orders";
+import { refundOrder, RefundError } from "@/lib/refunds";
+import { emailEnabled, sendOrderEmail, type OrderEmailKind } from "@/lib/email";
+import { ORDER_EMAIL_KINDS } from "@/lib/email/order-email";
 
 type ActionResult = { ok: boolean; error?: string; id?: string };
 
@@ -127,5 +130,48 @@ export async function fulfillOrderAction(
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to fulfill" };
+  }
+}
+
+/** Refund part or all of an order's payment (amount in paise). */
+export async function refundOrderAction(
+  orderId: string,
+  amount: number,
+): Promise<ActionResult & { warning?: string; cancelled?: boolean; refunded?: number }> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { ok: false, error: "Only admins can refund orders." };
+  }
+  try {
+    const result = await refundOrder(orderId, amount);
+    revalidatePath("/admin/orders");
+    return { ok: true, warning: result.warning, cancelled: result.cancelled, refunded: result.amount };
+  } catch (err) {
+    if (err instanceof RefundError) return { ok: false, error: err.message };
+    console.error("refundOrderAction failed", err);
+    return { ok: false, error: "Refund failed. Check the Razorpay dashboard before trying again." };
+  }
+}
+
+/** Send (or re-send) an order email to the customer now. */
+export async function sendOrderEmailAction(
+  orderId: string,
+  kind: OrderEmailKind,
+): Promise<ActionResult> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { ok: false, error: "Only admins can send emails." };
+  }
+  if (!ORDER_EMAIL_KINDS.includes(kind)) return { ok: false, error: "Unknown email." };
+  if (!emailEnabled) return { ok: false, error: "Email isn't set up yet — add RESEND_API_KEY." };
+  try {
+    await sendOrderEmail(orderId, kind, { manual: true });
+    revalidatePath("/admin/orders");
+    return { ok: true };
+  } catch (err) {
+    revalidatePath("/admin/orders");
+    return { ok: false, error: err instanceof Error ? err.message : "Email failed" };
   }
 }

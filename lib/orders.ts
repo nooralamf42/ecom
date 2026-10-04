@@ -9,6 +9,7 @@ import {
   trackShipment,
   trackingUrlFor,
 } from "./shiprocket";
+import { queueOrderEmail } from "./email";
 import type { OrderStatus } from "@prisma/client";
 
 /** Map Shiprocket's free-text courier status onto our own order lifecycle. */
@@ -36,7 +37,8 @@ const TERMINAL_STATUSES: OrderStatus[] = ["DELIVERED", "CANCELLED"];
  * status to match (e.g. move to SHIPPED once actually picked up, DELIVERED
  * once delivered). No-ops for orders without an AWB or already in a terminal
  * state. Safe to call often — failures are swallowed since this is a
- * best-effort background refresh, not a critical path.
+ * best-effort background refresh, not a critical path. Sends the shipped /
+ * delivered email on those transitions, so it must run inside a request.
  */
 export async function syncOrderTracking(orderId: string): Promise<void> {
   if (!hasDatabase || !shiprocketEnabled) return;
@@ -47,7 +49,14 @@ export async function syncOrderTracking(orderId: string): Promise<void> {
     const track = await trackShipment(order.awbCode);
     const mapped = mapCourierStatus(track.currentStatus);
     if (mapped && mapped !== order.status) {
-      await db.order.update({ where: { id: orderId }, data: { status: mapped } });
+      // Only the call that actually changes the status sends the email, even
+      // if several syncs (page views, webhook) run at once.
+      const { count } = await db.order.updateMany({
+        where: { id: orderId, status: order.status },
+        data: { status: mapped },
+      });
+      if (count > 0 && mapped === "SHIPPED") queueOrderEmail(orderId, "shipped");
+      if (count > 0 && mapped === "DELIVERED") queueOrderEmail(orderId, "delivered");
     }
   } catch (err) {
     console.error("Shiprocket tracking sync failed", err);

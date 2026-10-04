@@ -1,6 +1,5 @@
-import { after } from "next/server";
 import { db } from "./db";
-import { emailEnabled, sendOrderConfirmation } from "./email";
+import { queueOrderEmail } from "./email";
 
 export type MarkPaidResult =
   | { status: "paid"; orderNumber: number } // moved PENDING -> PAID now
@@ -31,15 +30,8 @@ export async function markOrderPaid(
   });
   if (!order) return { status: "unknown-order" };
   if (count > 0) {
-    // This call made it PAID, so it alone sends the confirmation — after the
-    // response, so a slow email service never delays the customer.
-    if (emailEnabled) {
-      after(() =>
-        sendOrderConfirmation(order.id).catch((err) =>
-          console.error(`Order #${order.number}: confirmation email failed`, err),
-        ),
-      );
-    }
+    // This call made it PAID, so it alone sends the confirmation.
+    queueOrderEmail(order.id, "confirmed");
     return { status: "paid", orderNumber: order.number };
   }
   if (order.status === "CANCELLED") return { status: "cancelled", orderNumber: order.number };

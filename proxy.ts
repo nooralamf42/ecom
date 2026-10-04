@@ -12,7 +12,7 @@ const withClerk = clerkMiddleware(async (auth, req) => {
   }
 });
 
-// In demo mode (no Clerk keys) middleware is a pass-through.
+// In demo mode (no Clerk keys) the proxy is a pass-through.
 export default clerkEnabled ? withClerk : () => NextResponse.next();
 
 export const config = {

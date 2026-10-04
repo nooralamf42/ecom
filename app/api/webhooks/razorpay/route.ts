@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/razorpay";
-import { hasDatabase } from "@/lib/db";
+import { db, hasDatabase } from "@/lib/db";
 import { markOrderPaid } from "@/lib/payments";
 
 type RazorpayWebhook = {
@@ -16,13 +16,15 @@ type RazorpayWebhook = {
       };
     };
     order?: { entity?: { id?: string } };
+    refund?: { entity?: { id?: string; payment_id?: string; amount?: number; status?: string } };
   };
 };
 
 /*
  * Razorpay server-to-server events (backup for /api/razorpay/verify, which
  * runs in the customer's browser and is lost if they close the window).
- * Subscribed events: payment.captured, order.paid, payment.failed.
+ * Events: payment.captured, order.paid, payment.failed, and optionally
+ * refund.processed / refund.failed (refund status shown in the admin).
  *
  * A non-2xx response makes Razorpay retry, so we only return an error when
  * a retry could help (e.g. the database was briefly unreachable).
@@ -64,6 +66,31 @@ export async function POST(req: Request) {
         }
       } catch (err) {
         console.error("Razorpay webhook: failed to mark order paid", err);
+        return NextResponse.json({ error: "Temporary failure" }, { status: 500 });
+      }
+      break;
+    }
+
+    // Refunds start as "pending"; these report the final outcome.
+    case "refund.processed":
+    case "refund.failed": {
+      const refund = event.payload?.refund?.entity;
+      if (!refund?.id || !hasDatabase) break;
+      try {
+        const failed = event.event === "refund.failed";
+        const { count } = await db.order.updateMany({
+          where: { razorpayRefundId: refund.id, NOT: { refundStatus: failed ? "failed" : "processed" } },
+          data: {
+            refundStatus: failed ? "failed" : "processed",
+            // A failed refund returned nothing, so it no longer counts as refunded.
+            ...(failed && refund.amount ? { refundedAmount: { decrement: refund.amount } } : {}),
+          },
+        });
+        if (failed && count > 0) {
+          console.error(`Razorpay refund ${refund.id} failed — the customer was not refunded; retry from the admin.`);
+        }
+      } catch (err) {
+        console.error("Razorpay webhook: failed to update refund", err);
         return NextResponse.json({ error: "Temporary failure" }, { status: 500 });
       }
       break;

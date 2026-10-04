@@ -249,3 +249,20 @@ export async function trackShipment(awbCode: string): Promise<TrackingInfo> {
     })),
   };
 }
+
+/**
+ * Cancel an order in Shiprocket (e.g. after a full refund before pickup).
+ * Shiprocket rejects this once the shipment has been picked up.
+ */
+export async function cancelShiprocketOrder(shiprocketOrderId: string): Promise<void> {
+  const token = await getToken();
+  const res = await fetch(`${BASE}/orders/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ ids: [Number(shiprocketOrderId)] }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Shiprocket cancel failed: ${res.status} ${text.slice(0, 200)}`);
+  }
+}
