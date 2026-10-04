@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyPaymentSignature } from "@/lib/razorpay";
-import { db, hasDatabase } from "@/lib/db";
+import { hasDatabase } from "@/lib/db";
+import { markOrderPaid } from "@/lib/payments";
 
 export async function POST(req: Request) {
   const body = (await req.json()) as {
@@ -26,11 +27,13 @@ export async function POST(req: Request) {
   let orderNumber: number | null = null;
   if (hasDatabase) {
     try {
-      const order = await db.order.update({
-        where: { razorpayOrderId: razorpay_order_id },
-        data: { status: "PAID", razorpayPaymentId: razorpay_payment_id },
-      });
-      orderNumber = order.number;
+      const result = await markOrderPaid(razorpay_order_id, razorpay_payment_id);
+      if (result.status !== "unknown-order") orderNumber = result.orderNumber;
+      if (result.status === "cancelled") {
+        console.error(
+          `Payment ${razorpay_payment_id} received for cancelled order #${result.orderNumber} — refund it from the Razorpay dashboard.`,
+        );
+      }
     } catch (err) {
       console.error("Failed to mark order paid", err);
     }
