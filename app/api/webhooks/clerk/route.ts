@@ -1,15 +1,12 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { db, hasDatabase } from "@/lib/db";
-
-const adminList = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
+import { syncClerkUser } from "@/lib/user-sync";
 
 type ClerkUser = {
   id: string;
-  email_addresses?: { email_address: string }[];
+  primary_email_address_id?: string | null;
+  email_addresses?: { id?: string; email_address: string; verification?: { status?: string } | null }[];
   first_name?: string | null;
   last_name?: string | null;
   image_url?: string | null;
@@ -47,21 +44,15 @@ export async function POST(req: Request) {
   const { type, data } = evt;
 
   if (type === "user.created" || type === "user.updated") {
-    const email = data.email_addresses?.[0]?.email_address ?? `${data.id}@clerk.local`;
-    const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || null;
-    const isAdmin =
-      adminList.includes(data.id.toLowerCase()) ||
-      adminList.includes(email.toLowerCase());
-    await db.user.upsert({
-      where: { clerkId: data.id },
-      update: { email, name, imageUrl: data.image_url ?? null },
-      create: {
-        clerkId: data.id,
-        email,
-        name,
-        imageUrl: data.image_url ?? null,
-        role: isAdmin ? "ADMIN" : "CUSTOMER",
-      },
+    const primary =
+      data.email_addresses?.find((e) => e.id && e.id === data.primary_email_address_id) ??
+      data.email_addresses?.[0];
+    await syncClerkUser({
+      clerkId: data.id,
+      email: primary?.email_address ?? null,
+      emailVerified: primary?.verification?.status === "verified",
+      name: [data.first_name, data.last_name].filter(Boolean).join(" ") || null,
+      imageUrl: data.image_url ?? null,
     });
   }
 

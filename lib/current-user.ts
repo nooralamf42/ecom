@@ -1,35 +1,22 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db, hasDatabase } from "./db";
 import { clerkEnabled } from "./auth-config";
+import { adminList, syncClerkUser } from "./user-sync";
 
-/** Clerk user IDs/emails granted admin, from ADMIN_EMAILS env (comma-separated). */
-const adminList = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
-
-/** Upsert and return the DB user for the signed-in Clerk user, or null. */
+/** Find, link or create the DB user for the signed-in Clerk user, or null. */
 export async function getDbUser() {
   if (!clerkEnabled || !hasDatabase) return null;
   const { userId } = await auth();
   if (!userId) return null;
 
   const cu = await currentUser();
-  const email =
-    cu?.emailAddresses[0]?.emailAddress ?? `${userId}@clerk.local`;
-  const isAdmin = adminList.includes(userId.toLowerCase()) ||
-    adminList.includes(email.toLowerCase());
-
-  return db.user.upsert({
-    where: { clerkId: userId },
-    update: { email, name: cu?.fullName ?? null, imageUrl: cu?.imageUrl ?? null },
-    create: {
-      clerkId: userId,
-      email,
-      name: cu?.fullName ?? null,
-      imageUrl: cu?.imageUrl ?? null,
-      role: isAdmin ? "ADMIN" : "CUSTOMER",
-    },
+  const primary = cu?.primaryEmailAddress ?? cu?.emailAddresses[0] ?? null;
+  return syncClerkUser({
+    clerkId: userId,
+    email: primary?.emailAddress ?? null,
+    emailVerified: primary?.verification?.status === "verified",
+    name: cu?.fullName ?? null,
+    imageUrl: cu?.imageUrl ?? null,
   });
 }
 
