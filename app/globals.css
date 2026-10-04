@@ -183,3 +183,48 @@
     scroll-behavior: auto;
   }
 }
+
+/* Admin page editor: Tiptap image resize handles (Tiptap ships no styles). */
+.page-editor [data-resize-container] {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.page-editor [data-resize-handle] {
+  position: absolute;
+  z-index: 2;
+  border: 2px solid white;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  transition: opacity 150ms;
+  touch-action: none;
+}
+.page-editor [data-resize-container]:hover [data-resize-handle],
+.page-editor .ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .page-editor [data-resize-handle] {
+    opacity: 1;
+  }
+}
+.page-editor [data-resize-handle="right"],
+.page-editor [data-resize-handle="left"] {
+  top: 50%;
+  width: 12px;
+  height: 44px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+.page-editor [data-resize-handle="right"] { right: -6px; }
+.page-editor [data-resize-handle="left"] { left: -6px; }
+.page-editor [data-resize-handle="bottom-right"],
+.page-editor [data-resize-handle="bottom-left"] {
+  bottom: -7px;
+  width: 16px;
+  height: 16px;
+}
+.page-editor [data-resize-handle="bottom-right"] { right: -7px; cursor: nwse-resize; }
+.page-editor [data-resize-handle="bottom-left"] { left: -7px; cursor: nesw-resize; }

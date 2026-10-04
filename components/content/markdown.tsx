@@ -52,7 +52,7 @@ const components: Components = {
   img: ({ src, alt }) =>
     typeof src === "string" && src.startsWith("https://") ? (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt ?? ""} className="mt-4 rounded-2xl" loading="lazy" />
+      <img src={src} alt={alt ?? ""} className="mt-4 h-auto max-w-full rounded-2xl" loading="lazy" />
     ) : null,
 };
 

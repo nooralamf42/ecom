@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -15,6 +16,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Field, SettingsCard, TextAreaField, TextField, Toggle } from "./settings/fields";
+// The editor is only needed here, so keep it out of every other bundle.
+const RichTextEditor = dynamic(() => import("./rich-text-editor"), {
+  ssr: false,
+  loading: () => <div className="min-h-[22rem] animate-pulse rounded-xl border bg-muted/40" />,
+});
+
+const VIEWS = [
+  { id: "visual", label: "Visual" },
+  { id: "markdown", label: "Markdown" },
+  { id: "preview", label: "Preview" },
+] as const;
 
 export type EditablePage = PageInput & { id: string };
 
@@ -24,7 +36,9 @@ export function PageForm({ page }: { page?: EditablePage }) {
   const storeName = settings.identity.storeName;
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [view, setView] = useState<"write" | "preview">("write");
+  const [view, setView] = useState<(typeof VIEWS)[number]["id"]>("visual");
+  // Remount the visual editor after markdown edits so it picks them up.
+  const [editorKey, setEditorKey] = useState(0);
   // Auto-fill the URL from the title until the admin edits it themselves.
   const [slugTouched, setSlugTouched] = useState(Boolean(page));
   const [form, setForm] = useState<PageInput>({
@@ -106,21 +120,26 @@ export function PageForm({ page }: { page?: EditablePage }) {
 
         <Field label="Content" error={errors.content}>
           <div className="mb-2 flex gap-1">
-            {(["write", "preview"] as const).map((v) => (
+            {VIEWS.map((v) => (
               <button
-                key={v}
+                key={v.id}
                 type="button"
-                onClick={() => setView(v)}
+                onClick={() => {
+                  if (view === "markdown" && v.id === "visual") setEditorKey((k) => k + 1);
+                  setView(v.id);
+                }}
                 className={cn(
-                  "rounded-full px-3 py-1 text-xs font-semibold capitalize",
-                  view === v ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                  "rounded-full px-3 py-1 text-xs font-semibold",
+                  view === v.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
                 )}
               >
-                {v}
+                {v.label}
               </button>
             ))}
           </div>
-          {view === "write" ? (
+          {view === "visual" ? (
+            <RichTextEditor key={editorKey} value={form.content} onChange={(md) => set("content", md)} />
+          ) : view === "markdown" ? (
             <Textarea
               value={form.content}
               onChange={(e) => set("content", e.target.value)}
@@ -138,8 +157,8 @@ export function PageForm({ page }: { page?: EditablePage }) {
             </div>
           )}
           <p className="mt-2 text-xs text-muted-foreground">
-            Formatting: <code>## Heading</code>, <code>**bold**</code>, <code>- list item</code>,{" "}
-            <code>[link text](/products)</code>. Placeholders filled from your settings:{" "}
+            Paste or drag images straight into the editor. Use <strong>Insert</strong> for placeholders
+            filled from your settings:{" "}
             {PAGE_TOKENS.map((t, i) => (
               <span key={t.token}>
                 <code title={t.label}>{`{{${t.token}}}`}</code>

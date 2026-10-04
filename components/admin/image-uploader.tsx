@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2, Plus, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { uploadImage, type UploadContext } from "@/lib/upload-image";
 
 export function ImageUploader({
   value,
@@ -14,7 +15,7 @@ export function ImageUploader({
 }: {
   value: string[];
   onChange: (v: string[]) => void;
-  context?: "product" | "review" | "branding";
+  context?: UploadContext;
   allowUrl?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -24,35 +25,11 @@ export function ImageUploader({
   async function handleFile(file: File) {
     setUploading(true);
     try {
-      const signRes = await fetch("/api/cloudinary/sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context }),
-      });
-      const sign = await signRes.json();
-      if (!signRes.ok) {
-        toast.error(sign.error ?? "Uploads not configured — paste an image URL instead");
-        return;
-      }
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("api_key", sign.apiKey);
-      fd.append("timestamp", String(sign.timestamp));
-      fd.append("signature", sign.signature);
-      fd.append("folder", sign.folder);
-      const up = await fetch(
-        `https://api.cloudinary.com/v1_1/${sign.cloudName}/image/upload`,
-        { method: "POST", body: fd },
-      );
-      const data = await up.json();
-      if (data.secure_url) {
-        onChange([...value, data.secure_url]);
-        toast.success("Image uploaded");
-      } else {
-        toast.error("Upload failed");
-      }
-    } catch {
-      toast.error("Upload failed");
+      const url = await uploadImage(file, context);
+      onChange([...value, url]);
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

@@ -27,6 +27,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Cloudinary is not configured" }, { status: 400 });
   }
 
-  const folder = isReview ? "store/reviews" : context === "branding" ? "store/branding" : "store/products";
+  const folder = isReview
+    ? "store/reviews"
+    : context === "branding"
+      ? "store/branding"
+      : context === "content"
+        ? "store/content"
+        : "store/products";
   return NextResponse.json(signUpload(folder));
 }
