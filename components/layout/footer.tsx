@@ -51,6 +51,7 @@ export function Footer({
       title: "Support",
       links: [
         { label: "My orders", href: "/orders" },
+        { label: "Track order", href: "/track-order" },
         { label: "FAQ", href: "/#faq" },
         { label: "Admin", href: "/admin" },
       ],

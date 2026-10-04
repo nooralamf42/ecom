@@ -2,7 +2,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { clerkEnabled } from "@/lib/auth-config";
 
-const isProtectedRoute = createRouteMatcher(["/orders(.*)", "/admin(.*)"]);
+// /orders handles its own access: guests can see orders placed on this device
+// or found via /track-order (see lib/order-access.ts).
+const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
 
 const withClerk = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {

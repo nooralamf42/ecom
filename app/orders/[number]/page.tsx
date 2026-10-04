@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Star, Truck } from "lucide-react";
 import { getOrderByNumber } from "@/lib/orders";
-import { clerkEnabled } from "@/lib/auth-config";
 import { formatPrice } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { PendingOrderActions } from "@/components/orders/pending-order-actions";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ number: string }> }) {
+  const { number } = await params;
+  return { title: `Order #${number}`, robots: { index: false } };
+}
 
 export default async function OrderDetailPage({
   params,
@@ -15,8 +19,9 @@ export default async function OrderDetailPage({
   params: Promise<{ number: string }>;
 }) {
   const { number } = await params;
-  const order = clerkEnabled ? await getOrderByNumber(Number(number)) : null;
-  if (!order) notFound();
+  const order = await getOrderByNumber(Number(number));
+  // Missing or not theirs: same response either way, so order numbers can't be probed.
+  if (!order) redirect(`/track-order?order=${encodeURIComponent(number)}`);
 
   // Customers can review items from orders that have been paid or beyond.
   const canReview = ["PAID", "FULFILLED", "SHIPPED", "DELIVERED"].includes(

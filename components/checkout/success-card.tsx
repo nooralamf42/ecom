@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils";
 export function SuccessCard({
   orderNumber,
   demo,
+  guest,
 }: {
   orderNumber?: string;
   demo?: boolean;
+  /** Checked out without an account. */
+  guest?: boolean;
 }) {
   return (
     <div className="container-page grid min-h-[70vh] place-items-center py-16 text-center">
@@ -51,18 +54,34 @@ export function SuccessCard({
           )}
         </motion.p>
 
+        {guest && orderNumber && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="mx-auto mt-4 max-w-md rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground"
+          >
+            This order is saved on this device under <strong>My orders</strong>. On another
+            device, sign up with the email you used, or use{" "}
+            <Link href="/track-order" className="font-semibold text-primary hover:underline">
+              Track order
+            </Link>{" "}
+            with your order number and phone.
+          </motion.p>
+        )}
+
         <div className="mt-8 flex justify-center gap-3">
           <Link href="/products" className={cn(buttonVariants({ size: "lg" }), "rounded-full")}>
             Keep shopping
           </Link>
           <Link
-            href="/orders"
+            href={orderNumber ? `/orders/${orderNumber}` : "/orders"}
             className={cn(
               buttonVariants({ size: "lg", variant: "secondary" }),
               "rounded-full",
             )}
           >
-            View orders
+            {orderNumber ? "View order" : "View orders"}
           </Link>
         </div>
       </div>

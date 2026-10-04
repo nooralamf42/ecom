@@ -8,6 +8,7 @@ export const RESERVED_SLUGS = new Set([
   "cart",
   "checkout",
   "orders",
+  "track-order",
   "products",
   "sign-in",
   "sign-up",

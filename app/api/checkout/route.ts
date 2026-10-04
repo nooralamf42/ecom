@@ -7,6 +7,7 @@ import { razorpay, razorpayEnabled } from "@/lib/razorpay";
 import { db, hasDatabase } from "@/lib/db";
 import { getDbUser } from "@/lib/current-user";
 import { saveUserAddress } from "@/lib/addresses";
+import { grantGuestOrderAccess } from "@/lib/order-access";
 
 export async function POST(req: Request) {
   let json: unknown;
@@ -123,6 +124,8 @@ export async function POST(req: Request) {
       });
       orderId = order.id;
       orderNumber = order.number;
+      // Guests: remember the order on this browser so "My orders" shows it later.
+      if (!user) await grantGuestOrderAccess(order.number);
     } catch (err) {
       console.error("Order persistence failed", err);
     }

@@ -1,5 +1,6 @@
 import { db, hasDatabase } from "./db";
 import { getDbUser, isAdmin } from "./current-user";
+import { getGuestOrderNumbers, getVerifiedEmails } from "./order-access";
 import {
   assignAwb,
   createShiprocketOrder,
@@ -53,19 +54,47 @@ export async function syncOrderTracking(orderId: string): Promise<void> {
   }
 }
 
-export async function getUserOrders() {
+/** Conditions matching guest orders placed with one of these emails (any letter case). */
+function guestOrdersForEmails(emails: string[]) {
+  return emails.map((e) => ({ userId: null, email: { equals: e, mode: "insensitive" as const } }));
+}
+
+/**
+ * Orders to show on "My orders": the signed-in account's orders (guest
+ * orders placed with a verified email of theirs are attached to the account
+ * first), plus any guest orders remembered on this browser.
+ */
+export async function getMyOrders() {
   if (!hasDatabase) return [];
-  const user = await getDbUser();
-  if (!user) return [];
+  const [user, emails, guestNumbers] = await Promise.all([
+    getDbUser(),
+    getVerifiedEmails(),
+    getGuestOrderNumbers(),
+  ]);
+
+  if (user && emails.length > 0) {
+    await db.order.updateMany({
+      where: { OR: guestOrdersForEmails(emails) },
+      data: { userId: user.id },
+    });
+  }
+
+  const where = [
+    ...(user ? [{ userId: user.id }] : []),
+    ...(guestNumbers.length > 0 ? [{ number: { in: guestNumbers } }] : []),
+  ];
+  if (where.length === 0) return [];
+
   return db.order.findMany({
-    where: { userId: user.id },
+    where: { OR: where },
     include: { items: true },
     orderBy: { createdAt: "desc" },
   });
 }
 
+/** One order, or null if it doesn't exist or this visitor may not see it. */
 export async function getOrderByNumber(number: number) {
-  if (!hasDatabase || Number.isNaN(number)) return null;
+  if (!hasDatabase || !Number.isInteger(number)) return null;
   const include = {
     items: { include: { product: { select: { slug: true } } } },
   } as const;
@@ -73,15 +102,27 @@ export async function getOrderByNumber(number: number) {
   let order = await db.order.findUnique({ where: { number }, include });
   if (!order) return null;
 
+  // Check access before doing anything else with the order.
+  const [user, admin, guestNumbers] = await Promise.all([
+    getDbUser(),
+    isAdmin(),
+    getGuestOrderNumbers(),
+  ]);
+  const ownsIt = Boolean(user && order.userId === user.id);
+  let emailMatch = false;
+  if (!ownsIt && !order.userId && user) {
+    emailMatch = (await getVerifiedEmails()).includes(order.email.toLowerCase());
+    if (emailMatch) {
+      await db.order.update({ where: { id: order.id }, data: { userId: user.id } });
+    }
+  }
+  if (!admin && !ownsIt && !emailMatch && !guestNumbers.includes(number)) {
+    return null;
+  }
+
   if (order.awbCode && !TERMINAL_STATUSES.includes(order.status)) {
     await syncOrderTracking(order.id).catch(() => {});
     order = (await db.order.findUnique({ where: { number }, include })) ?? order;
-  }
-
-  const user = await getDbUser();
-  const admin = await isAdmin();
-  if (!admin && order.userId && order.userId !== user?.id) {
-    return null; // not authorised
   }
   return order;
 }

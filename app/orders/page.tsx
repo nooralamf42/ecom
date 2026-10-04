@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Package } from "lucide-react";
-import { getUserOrders } from "@/lib/orders";
+import { auth } from "@clerk/nextjs/server";
+import { getMyOrders } from "@/lib/orders";
 import { clerkEnabled } from "@/lib/auth-config";
 import { formatPrice } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
@@ -12,11 +13,38 @@ export const metadata = { title: "My orders" };
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-  const orders = clerkEnabled ? await getUserOrders() : [];
+  const [orders, signedIn] = await Promise.all([
+    getMyOrders(),
+    clerkEnabled ? auth().then((a) => Boolean(a.userId)) : false,
+  ]);
 
   return (
     <div className="container-page py-12 sm:py-16">
       <h1 className="font-heading text-4xl font-bold">My orders</h1>
+
+      {!signedIn && (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 text-sm">
+          <p className="text-muted-foreground">
+            {orders.length > 0
+              ? "Showing orders placed on this device. "
+              : "Ordered without an account? "}
+            Sign in with the email you used to see all your orders anywhere.
+          </p>
+          <div className="flex gap-2">
+            {clerkEnabled && (
+              <Link href="/sign-in?redirect_url=/orders" className={cn(buttonVariants({ size: "sm" }), "rounded-full")}>
+                Sign in
+              </Link>
+            )}
+            <Link
+              href="/track-order"
+              className={cn(buttonVariants({ size: "sm", variant: "outline" }), "rounded-full")}
+            >
+              Track an order
+            </Link>
+          </div>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div className="mt-10 grid place-items-center rounded-3xl border bg-card py-16 text-center">
