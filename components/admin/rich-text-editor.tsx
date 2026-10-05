@@ -79,7 +79,7 @@ const contentClass = cn(
   "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em]",
   "[&_pre]:mt-3 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:bg-muted [&_pre]:p-3",
   "[&_hr]:my-6 [&_hr]:border-border",
-  "[&_img]:mt-3 [&_img]:max-w-full [&_img]:rounded-2xl [&_[data-resize-container]]:mt-3 [&_[data-resize-container]]:max-w-full",
+  "[&_img]:mt-3 [&_img]:max-w-full [&_img[data-rounded]]:rounded-2xl [&_[data-resize-container]]:mt-3 [&_[data-resize-container]]:max-w-full",
   "[&_.ProseMirror-selectednode_img]:ring-2 [&_.ProseMirror-selectednode_img]:ring-primary",
   "[&_.tableWrapper]:mt-3 [&_.tableWrapper]:overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm",
   "[&_td]:border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_th]:border [&_th]:bg-muted/60 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-bold",
@@ -444,6 +444,7 @@ function ImageDialog({
   const attrs = editing ? editor.getAttributes("image") : {};
   const [src, setSrc] = useState<string>(attrs.src ?? "");
   const [alt, setAlt] = useState<string>(attrs.alt ?? "");
+  const [rounded, setRounded] = useState<boolean>(Boolean(attrs.rounded));
   const [error, setError] = useState<string | null>(null);
 
   function save(e: React.FormEvent) {
@@ -454,9 +455,9 @@ function ImageDialog({
       setError("Use an https:// image link, or upload a file.");
       return;
     }
-    const next = { src: src.trim(), alt: alt.trim() || null };
+    const next = { src: src.trim(), alt: alt.trim() || null, rounded };
     if (editing) editor.chain().focus().updateAttributes("image", next).run();
-    else editor.chain().focus().setImage({ src: next.src, alt: next.alt ?? undefined }).run();
+    else editor.chain().focus().insertContent({ type: "image", attrs: next }).run();
     onClose();
   }
 
@@ -509,6 +510,15 @@ function ImageDialog({
           />
           <p className="mt-1.5 text-xs text-muted-foreground">Helps Google and screen readers understand the image.</p>
         </div>
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            checked={rounded}
+            onChange={(e) => setRounded(e.target.checked)}
+            className="size-4 accent-primary"
+          />
+          <span className="font-medium">Rounded corners</span>
+        </label>
         <DialogFooter>
           {editing && (
             <Button

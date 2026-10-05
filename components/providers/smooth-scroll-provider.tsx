@@ -55,6 +55,10 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       smoothWheel: true,
       wheelMultiplier: 1,
       touchMultiplier: 1.5,
+      // Let scrollable boxes (cart drawer, menus, dropdown lists) scroll
+      // themselves — otherwise Lenis swallows the wheel/touch, and while it's
+      // stopped for an open drawer nothing inside can scroll at all.
+      allowNestedScroll: true,
     });
     lenisRef.current = lenis;
 

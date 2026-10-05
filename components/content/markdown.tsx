@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
+import { splitImageStyle } from "@/lib/cloudinary-url";
 import remarkGfm from "remark-gfm";
 
 /*
@@ -49,11 +50,19 @@ const components: Components = {
         {children}
       </a>
     ),
-  img: ({ src, alt }) =>
-    typeof src === "string" && src.startsWith("https://") ? (
+  img: ({ src, alt }) => {
+    if (typeof src !== "string" || !src.startsWith("https://")) return null;
+    const image = splitImageStyle(src);
+    return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt ?? ""} className="mt-4 h-auto max-w-full rounded-2xl" loading="lazy" />
-    ) : null,
+      <img
+        src={image.src}
+        alt={alt ?? ""}
+        className={`mt-4 h-auto max-w-full${image.rounded ? " rounded-2xl" : ""}`}
+        loading="lazy"
+      />
+    );
+  },
 };
 
 export function Markdown({ children }: { children: string }) {

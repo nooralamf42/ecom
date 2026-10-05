@@ -28,3 +28,20 @@ export function withCloudinaryWidth(src: string, width: number | null | undefine
   const w = width ? Math.round(width) : 0;
   return w > 0 ? `${m[1]}c_limit,w_${w}/${rest}` : `${m[1]}${rest}`;
 }
+
+/*
+ * Rounded corners are a per-image choice stored as a "#rounded" fragment on
+ * the image link (markdown has no styling). Browsers ignore the fragment when
+ * loading the image, so it works for any URL.
+ */
+const ROUNDED = "#rounded";
+
+export function splitImageStyle(src: string): { src: string; rounded: boolean } {
+  return src.endsWith(ROUNDED)
+    ? { src: src.slice(0, -ROUNDED.length), rounded: true }
+    : { src, rounded: false };
+}
+
+export function withImageStyle(src: string, rounded: boolean): string {
+  return rounded ? `${src}${ROUNDED}` : src;
+}

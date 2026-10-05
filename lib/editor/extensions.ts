@@ -2,7 +2,12 @@ import type { AnyExtension } from "@tiptap/core";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Image } from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
-import { widthFromCloudinaryUrl, withCloudinaryWidth } from "@/lib/cloudinary-url";
+import {
+  splitImageStyle,
+  widthFromCloudinaryUrl,
+  withCloudinaryWidth,
+  withImageStyle,
+} from "@/lib/cloudinary-url";
 
 /*
  * Editor schema for content pages, shared by the admin editor and tests.
@@ -10,20 +15,38 @@ import { widthFromCloudinaryUrl, withCloudinaryWidth } from "@/lib/cloudinary-ur
  * and display with components/content/markdown.tsx on the public site.
  */
 
-/** Images whose resized width survives in markdown via the Cloudinary URL. */
+/**
+ * Images whose resized width (Cloudinary URL) and rounded-corner choice
+ * ("#rounded" on the link) survive in markdown.
+ */
 export const PageImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      rounded: {
+        default: false,
+        parseHTML: (el) => el.hasAttribute("data-rounded"),
+        renderHTML: (attrs) => (attrs.rounded ? { "data-rounded": "" } : {}),
+      },
+    };
+  },
+
   parseMarkdown: (token, helpers) => {
-    const src = String(token.href ?? "");
+    const { src, rounded } = splitImageStyle(String(token.href ?? ""));
     return helpers.createNode("image", {
       src,
       alt: token.text || null,
       title: token.title || null,
       width: widthFromCloudinaryUrl(src),
+      rounded,
     });
   },
 
   renderMarkdown: (node) => {
-    const src = withCloudinaryWidth(String(node.attrs?.src ?? ""), node.attrs?.width);
+    const src = withImageStyle(
+      withCloudinaryWidth(String(node.attrs?.src ?? ""), node.attrs?.width),
+      Boolean(node.attrs?.rounded),
+    );
     const alt = String(node.attrs?.alt ?? "").replace(/[[\]]/g, "");
     const title = String(node.attrs?.title ?? "").replace(/"/g, "'");
     return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;

@@ -28,7 +28,7 @@ export function CartDrawer() {
     <Sheet open={isOpen} onOpenChange={(o) => !o && close()}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+        className="flex h-dvh w-full flex-col gap-0 p-0 sm:max-w-md"
       >
         <SheetHeader className="border-b px-5 py-4">
           <SheetTitle className="flex items-center gap-2 font-heading text-2xl">
@@ -66,7 +66,9 @@ export function CartDrawer() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        {/* min-h-0 lets this shrink and scroll; data-lenis-prevent keeps the
+            smooth-scroll library (paused while the drawer is open) out of it. */}
+        <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           {!hydrated ? null : lines.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="mb-4 rounded-full bg-muted p-5">
