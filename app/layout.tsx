@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fredoka, Nunito, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkEnabled } from "@/lib/auth-config";
 import { getStoreCategories } from "@/lib/categories";
@@ -14,21 +14,30 @@ import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Toaster } from "@/components/ui/sonner";
 
-const fredoka = Fredoka({
+// Fonts live in app/fonts (Latin variable fonts from Google Fonts, OFL licence) so builds
+// never depend on reaching Google — a failed font download used to break the whole build.
+const fredoka = localFont({
+  src: "./fonts/fredoka-latin.woff2",
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "300 700",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
-const nunito = Nunito({
+const nunito = localFont({
+  src: "./fonts/nunito-latin.woff2",
   variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "200 1000",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
+  fallback: ["ui-monospace", "monospace"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
